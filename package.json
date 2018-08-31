@@ -1,0 +1,24 @@
+{
+  "name": "ts-form-builder",
+  "version": "1.0.0",
+  "description": "Typescript Sample App that use 123 Form Builder API v2 to login and show form statistics",
+  "main": "",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "tsc"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/andreidragu/ts-form-builder.git"
+  },
+  "keywords": [],
+  "author": "Andrei Dragu",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/andreidragu/ts-form-builder/issues"
+  },
+  "homepage": "https://andreidragu.github.io/ts-form-builder",
+  "devDependencies": {
+    "typescript": "^3.0.3"
+  }
+}
