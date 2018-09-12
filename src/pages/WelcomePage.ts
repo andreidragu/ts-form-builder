@@ -1,8 +1,14 @@
+/// <reference path='../utils/Utils.ts' />
+
 module Pages {
+    import HttpUtils = Utils.HttpUtils;
+
     export class WelcomePage {
         constructor() {
-            document.getElementById('loginForm').style.display = 'none';
-            document.getElementById('welcome').style.display = null;
+            HttpUtils.fetchInternal('./welcome.html')
+                .then((text: string) => {
+                    document.getElementById('mainContainer').innerHTML = text;
+                });
         }
     }
 }

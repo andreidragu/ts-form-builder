@@ -1,4 +1,4 @@
-/// <reference path="./pages/WelcomePage" />
+/// <reference path="./pages/WelcomePage.ts" />
 /// <reference path="./pages/LoginPage.ts" />
 
 import WelcomePage = Pages.WelcomePage;
@@ -6,8 +6,6 @@ import LoginPage = Pages.LoginPage;
 
 class EntryPoint {
     private isLoggedIn: boolean;
-    private welcomePage: WelcomePage;
-    private loginPage: LoginPage
 
     constructor() {
         this.initVars();
