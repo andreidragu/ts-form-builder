@@ -13,7 +13,7 @@ module Utils {
     export interface Response403 {
         error: {
             message: string,
-            status_code: number
+            status_code?: number
         }
     }
 

@@ -2,19 +2,17 @@
     <h2>Vertical (basic) form</h2>
     <div id="errorElem" class="bg-danger text-center"></div>
     <form id="loginForm">
-        <div class="form-group">
-            <label for="email">Email:</label>
-            <input type="email" class="form-control" id="email" required="required" placeholder="Enter email" name="email"></input>
-        </div>
-        <div class="form-group">
-            <label for="password">Password:</label>
-            <input type="password" class="form-control" id="password" required="required" placeholder="Enter password" name="password"></input>
-        </div>
-        <!-- <div class="checkbox">
-            <label>
-                <input type="checkbox" name="remember"> Remember me</input>
-            </label>
-        </div> -->
-        <button id="loginSubmit" type="submit" class="btn btn-default">Submit</button>
+        <fieldset id="loginFormFieldset">
+            <div class="form-group">
+                <label for="email">Email:</label>
+                <input type="email" class="form-control" id="email" required="required" placeholder="Enter email" name="email"></input>
+            </div>
+            <div class="form-group">
+                <label for="password">Password:</label>
+                <input type="password" class="form-control" id="password" required="required" placeholder="Enter password"
+                    name="password"></input>
+            </div>
+            <button id="loginSubmit" type="submit" class="btn btn-default">Submit</button>
+        </fieldset>
     </form>
 </div>
