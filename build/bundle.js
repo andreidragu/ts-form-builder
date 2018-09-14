@@ -38,7 +38,7 @@ var Utils;
                 mode: 'cors',
                 credentials: 'same-origin',
                 headers: {
-                    'Access-Control-Request-Headers': 'content-type'
+                    'Content-Type': 'application/json'
                 }
             })
                 .then(function (response) {
@@ -81,17 +81,87 @@ var Pages;
     }());
     Pages.BasePage = BasePage;
 })(Pages || (Pages = {}));
+var core;
+(function (core) {
+    var http;
+    (function (http) {
+        var HTTP_REQUEST_TYPE;
+        (function (HTTP_REQUEST_TYPE) {
+            HTTP_REQUEST_TYPE[HTTP_REQUEST_TYPE["XHR"] = 0] = "XHR";
+            HTTP_REQUEST_TYPE[HTTP_REQUEST_TYPE["FETCH"] = 1] = "FETCH";
+        })(HTTP_REQUEST_TYPE = http.HTTP_REQUEST_TYPE || (http.HTTP_REQUEST_TYPE = {}));
+        var HttpRequestFactory = /** @class */ (function () {
+            function HttpRequestFactory() {
+            }
+            HttpRequestFactory.getInstance = function () {
+                if (this._instance === undefined) {
+                    this._instance = new HttpRequestFactory();
+                }
+                return this._instance;
+            };
+            HttpRequestFactory.prototype.getHttpRequestType = function (httpRequestType) {
+                if (httpRequestType === void 0) { httpRequestType = HTTP_REQUEST_TYPE.FETCH; }
+                switch (httpRequestType) {
+                    case HTTP_REQUEST_TYPE.XHR:
+                        return new http.XhrRequest();
+                    case HTTP_REQUEST_TYPE.FETCH:
+                        return new http.FetchRequest();
+                }
+            };
+            return HttpRequestFactory;
+        }());
+        http.HttpRequestFactory = HttpRequestFactory;
+    })(http = core.http || (core.http = {}));
+})(core || (core = {}));
+/// <reference path='../core/http/HttpRequestFactory.ts' />
+var utils;
+(function (utils) {
+    var HTTP_REQUEST_TYPE = core.http.HTTP_REQUEST_TYPE;
+    var HttpRequestFactory = core.http.HttpRequestFactory;
+    /**
+     * Singleton class used to make http requests
+     */
+    var HttpUtils = /** @class */ (function () {
+        function HttpUtils() {
+            this.httpRequest = HttpRequestFactory.getInstance().getHttpRequestType(HTTP_REQUEST_TYPE.XHR);
+        }
+        /**
+         * HttpUtils single instance object
+         */
+        HttpUtils.getInstance = function () {
+            if (this._instance === undefined) {
+                this._instance = new HttpUtils();
+            }
+            return this._instance;
+        };
+        HttpUtils.prototype.requestInternal = function (url) {
+            return this.httpRequest.requestInternal(url);
+        };
+        HttpUtils.prototype.requestExternal = function (url) {
+            return this.httpRequest.requestExternal(url);
+        };
+        return HttpUtils;
+    }());
+    utils.HttpUtils = HttpUtils;
+})(utils || (utils = {}));
 /// <reference path='BasePage.ts' />
 /// <reference path='../utils/Utils.ts' />
+/// <reference path='../utils/HttpUtils.ts' />
 var Pages;
 (function (Pages) {
     var BasePage = Pages.BasePage;
-    var HttpUtils = Utils.HttpUtils;
+    // import HttpUtils = Utils.HttpUtils;
+    var HttpUtils = utils.HttpUtils;
     var LoginPage = /** @class */ (function (_super) {
         __extends(LoginPage, _super);
         function LoginPage() {
             var _this = _super.call(this) || this;
-            HttpUtils.fetchInternal('./login.html')
+            // HttpUtils.fetchInternal('./login.html')
+            //     .then((text: string) => {
+            //         this.mainContainer.innerHTML = text;
+            //         this.initLoginVars();
+            //     });
+            HttpUtils.getInstance().requestInternal('./login.html')
                 .then(function (text) {
                 _this.mainContainer.innerHTML = text;
                 _this.initLoginVars();
@@ -124,7 +194,15 @@ var Pages;
                 ev.preventDefault();
                 return;
             }
-            HttpUtils.fetchExternal("https://api.123contactform.com/v2/token?email=" + emailForm + "&password=" + passForm, Utils.FETH_METHOD.POST)
+            // HttpUtils.fetchExternal(`https://api.123contactform.com/v2/token?email=${emailForm}&password=${passForm}`, Utils.FETH_METHOD.POST)
+            //     .then((data: Response200 | Response403) => {
+            //         if ('error' in data) {
+            //             this.handleError(data);
+            //         } else {
+            //             this.handleSuccess(data);
+            //         }
+            //     });
+            HttpUtils.getInstance().requestExternal("https://api.123contactform.com/v2/token?email=" + emailForm + "&password=" + passForm)
                 .then(function (data) {
                 if ('error' in data) {
                     _this.handleError(data);
@@ -187,4 +265,77 @@ var EntryPoint = /** @class */ (function () {
     return EntryPoint;
 }());
 window.onload = function () { new EntryPoint(); };
+var core;
+(function (core) {
+    var http;
+    (function (http) {
+        var FetchRequest = /** @class */ (function () {
+            function FetchRequest() {
+            }
+            FetchRequest.prototype.requestInternal = function (url) {
+                return fetch(url)
+                    .then(function (response) {
+                    if (response.ok) {
+                        return response.text();
+                    }
+                    else {
+                        return 'Something bad happened. Better start debugging!';
+                    }
+                });
+            };
+            FetchRequest.prototype.requestExternal = function (url) {
+                return fetch(url, {
+                    method: 'POST',
+                    mode: 'cors',
+                    credentials: 'same-origin',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                })
+                    .then(function (response) {
+                    return response.json();
+                });
+            };
+            return FetchRequest;
+        }());
+        http.FetchRequest = FetchRequest;
+    })(http = core.http || (core.http = {}));
+})(core || (core = {}));
+var core;
+(function (core) {
+    var http;
+    (function (http) {
+        var XhrRequest = /** @class */ (function () {
+            function XhrRequest() {
+            }
+            XhrRequest.prototype.requestInternal = function (url) {
+                return new Promise(function (resolve, reject) {
+                    var xhr = new XMLHttpRequest();
+                    xhr.open('GET', url);
+                    xhr.onload = function (evt) {
+                        resolve(xhr.responseText);
+                    };
+                    xhr.send();
+                });
+            };
+            XhrRequest.prototype.requestExternal = function (url) {
+                var _this = this;
+                return new Promise(function (resolve, reject) {
+                    var xhr = new XMLHttpRequest();
+                    xhr.open('POST', url);
+                    xhr.setRequestHeader('Content-Type', 'application/json');
+                    xhr.onload = function (evt) {
+                        resolve(_this.parseXHRResult(xhr));
+                    };
+                    xhr.send();
+                });
+            };
+            XhrRequest.prototype.parseXHRResult = function (xhr) {
+                return JSON.parse(xhr.responseText);
+            };
+            return XhrRequest;
+        }());
+        http.XhrRequest = XhrRequest;
+    })(http = core.http || (core.http = {}));
+})(core || (core = {}));
 //# sourceMappingURL=bundle.js.map

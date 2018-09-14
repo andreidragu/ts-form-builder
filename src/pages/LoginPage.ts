@@ -1,9 +1,11 @@
 /// <reference path='BasePage.ts' />
 /// <reference path='../utils/Utils.ts' />
+/// <reference path='../utils/HttpUtils.ts' />
 
 module Pages {
     import BasePage = Pages.BasePage;
-    import HttpUtils = Utils.HttpUtils;
+    // import HttpUtils = Utils.HttpUtils;
+    import HttpUtils = utils.HttpUtils;
     import Response200 = Utils.Response200;
     import Response403 = Utils.Response403;
 
@@ -13,7 +15,12 @@ module Pages {
 
         constructor() {
             super();
-            HttpUtils.fetchInternal('./login.html')
+            // HttpUtils.fetchInternal('./login.html')
+            //     .then((text: string) => {
+            //         this.mainContainer.innerHTML = text;
+            //         this.initLoginVars();
+            //     });
+            HttpUtils.getInstance().requestInternal('./login.html')
                 .then((text: string) => {
                     this.mainContainer.innerHTML = text;
                     this.initLoginVars();
@@ -45,12 +52,20 @@ module Pages {
             this.mainContainer.appendChild(this.loaderElem);
 
             if (emailForm === 'andrei.catalin7@gmail.com') {
-                this.handleError({error: {message: 'This user is locked. Too many tries!'}});
+                this.handleError({ error: { message: 'This user is locked. Too many tries!' } });
                 ev.preventDefault();
                 return;
             }
 
-            HttpUtils.fetchExternal(`https://api.123contactform.com/v2/token?email=${emailForm}&password=${passForm}`, Utils.FETH_METHOD.POST)
+            // HttpUtils.fetchExternal(`https://api.123contactform.com/v2/token?email=${emailForm}&password=${passForm}`, Utils.FETH_METHOD.POST)
+            //     .then((data: Response200 | Response403) => {
+            //         if ('error' in data) {
+            //             this.handleError(data);
+            //         } else {
+            //             this.handleSuccess(data);
+            //         }
+            //     });
+            HttpUtils.getInstance().requestExternal(`https://api.123contactform.com/v2/token?email=${emailForm}&password=${passForm}`)
                 .then((data: Response200 | Response403) => {
                     if ('error' in data) {
                         this.handleError(data);
