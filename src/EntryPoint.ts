@@ -1,8 +1,8 @@
 /// <reference path="./pages/WelcomePage.ts" />
 /// <reference path="./pages/LoginPage.ts" />
 
-import WelcomePage = Pages.WelcomePage;
-import LoginPage = Pages.LoginPage;
+import WelcomePage = pages.WelcomePage;
+import LoginPage = pages.LoginPage;
 
 class EntryPoint {
     private isLoggedIn: boolean;
@@ -19,7 +19,7 @@ class EntryPoint {
     }
 
     private showCorrespondingPage(): void {
-        if (this.isLoggedIn) {
+        if (!this.isLoggedIn) {
             new WelcomePage();
         } else {
             new LoginPage();

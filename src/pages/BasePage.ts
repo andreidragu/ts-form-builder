@@ -1,4 +1,4 @@
-module Pages {
+module pages {
     export class BasePage {
         protected mainContainer: HTMLElement;
         protected loaderElem: HTMLElement;

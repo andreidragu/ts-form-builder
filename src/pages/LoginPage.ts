@@ -1,13 +1,11 @@
 /// <reference path='BasePage.ts' />
-/// <reference path='../utils/Utils.ts' />
 /// <reference path='../utils/HttpUtils.ts' />
 
-module Pages {
-    import BasePage = Pages.BasePage;
-    // import HttpUtils = Utils.HttpUtils;
+module pages {
+    import BasePage = pages.BasePage;
     import HttpUtils = utils.HttpUtils;
-    import Response200 = Utils.Response200;
-    import Response403 = Utils.Response403;
+    import Response200 = core.request.Response200;
+    import Response403 = core.request.Response403;
 
     export class LoginPage extends BasePage {
         private loginForm: HTMLFormElement;
@@ -15,11 +13,6 @@ module Pages {
 
         constructor() {
             super();
-            // HttpUtils.fetchInternal('./login.html')
-            //     .then((text: string) => {
-            //         this.mainContainer.innerHTML = text;
-            //         this.initLoginVars();
-            //     });
             HttpUtils.getInstance().requestInternal('./login.html')
                 .then((text: string) => {
                     this.mainContainer.innerHTML = text;
@@ -57,14 +50,6 @@ module Pages {
                 return;
             }
 
-            // HttpUtils.fetchExternal(`https://api.123contactform.com/v2/token?email=${emailForm}&password=${passForm}`, Utils.FETH_METHOD.POST)
-            //     .then((data: Response200 | Response403) => {
-            //         if ('error' in data) {
-            //             this.handleError(data);
-            //         } else {
-            //             this.handleSuccess(data);
-            //         }
-            //     });
             HttpUtils.getInstance().requestExternal(`https://api.123contactform.com/v2/token?email=${emailForm}&password=${passForm}`)
                 .then((data: Response200 | Response403) => {
                     if ('error' in data) {

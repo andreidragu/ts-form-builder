@@ -1,11 +1,11 @@
-/// <reference path='../core/http/HttpRequestFactory.ts' />
+/// <reference path='../core/request/HttpRequestFactory.ts' />
 
 module utils {
-    import HttpRequest = core.http.HttpRequest;
-    import HTTP_REQUEST_TYPE = core.http.HTTP_REQUEST_TYPE;
-    import HttpRequestFactory = core.http.HttpRequestFactory;
-    import Response200 = core.http.Response200;
-    import Response403 = core.http.Response403;
+    import HttpRequestFactory = core.request.HttpRequestFactory;
+    import HTTP_REQUEST_TYPE = core.request.HTTP_REQUEST_TYPE;
+    import HttpRequest = core.request.HttpRequest;
+    import Response200 = core.request.Response200;
+    import Response403 = core.request.Response403;
 
     /**
      * Singleton class used to make http requests
@@ -14,7 +14,8 @@ module utils {
         private httpRequest: HttpRequest;
 
         private constructor() {
-            this.httpRequest = HttpRequestFactory.getInstance().getHttpRequestType(HTTP_REQUEST_TYPE.XHR);
+            const httpRequestFactory: HttpRequestFactory = new HttpRequestFactory(HTTP_REQUEST_TYPE.XHR);
+            this.httpRequest = httpRequestFactory.getHttpRequestType();
         }
 
         private static _instance: HttpUtils;

@@ -1,4 +1,4 @@
-module core.http {
+module core.request {
     export interface Response200 {
         status_code: number;
         token: string;

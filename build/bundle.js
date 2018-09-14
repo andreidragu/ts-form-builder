@@ -11,119 +11,45 @@ var __extends = (this && this.__extends) || (function () {
         d.prototype = b === null ? Object.create(b) : (__.prototype = b.prototype, new __());
     };
 })();
-var Utils;
-(function (Utils) {
-    var FETH_METHOD;
-    (function (FETH_METHOD) {
-        FETH_METHOD["GET"] = "GET";
-        FETH_METHOD["POST"] = "POST";
-    })(FETH_METHOD = Utils.FETH_METHOD || (Utils.FETH_METHOD = {}));
-    var HttpUtils = /** @class */ (function () {
-        function HttpUtils() {
-        }
-        HttpUtils.fetchInternal = function (url) {
-            return fetch(url)
-                .then(function (response) {
-                if (response.ok) {
-                    return response.text();
-                }
-                else {
-                    return 'Something bad happened. Better start debugging!';
-                }
-            });
-        };
-        HttpUtils.fetchExternal = function (url, method) {
-            return fetch(url, {
-                method: method,
-                mode: 'cors',
-                credentials: 'same-origin',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            })
-                .then(function (response) {
-                return response.json();
-            });
-        };
-        return HttpUtils;
-    }());
-    Utils.HttpUtils = HttpUtils;
-})(Utils || (Utils = {}));
-/// <reference path='../utils/Utils.ts' />
-var Pages;
-(function (Pages) {
-    var HttpUtils = Utils.HttpUtils;
-    var WelcomePage = /** @class */ (function () {
-        function WelcomePage() {
-            HttpUtils.fetchInternal('./welcome.html')
-                .then(function (text) {
-                document.getElementById('mainContainer').innerHTML = text;
-            });
-        }
-        return WelcomePage;
-    }());
-    Pages.WelcomePage = WelcomePage;
-})(Pages || (Pages = {}));
-var Pages;
-(function (Pages) {
-    var BasePage = /** @class */ (function () {
-        function BasePage() {
-            this.initVars();
-        }
-        /**
-         * Initialize the variables.
-         */
-        BasePage.prototype.initVars = function () {
-            this.mainContainer = document.getElementById('mainContainer');
-            this.loaderElem = document.getElementsByClassName('loader').item(0);
-        };
-        return BasePage;
-    }());
-    Pages.BasePage = BasePage;
-})(Pages || (Pages = {}));
 var core;
 (function (core) {
-    var http;
-    (function (http) {
+    var request;
+    (function (request) {
         var HTTP_REQUEST_TYPE;
         (function (HTTP_REQUEST_TYPE) {
             HTTP_REQUEST_TYPE[HTTP_REQUEST_TYPE["XHR"] = 0] = "XHR";
             HTTP_REQUEST_TYPE[HTTP_REQUEST_TYPE["FETCH"] = 1] = "FETCH";
-        })(HTTP_REQUEST_TYPE = http.HTTP_REQUEST_TYPE || (http.HTTP_REQUEST_TYPE = {}));
+        })(HTTP_REQUEST_TYPE = request.HTTP_REQUEST_TYPE || (request.HTTP_REQUEST_TYPE = {}));
         var HttpRequestFactory = /** @class */ (function () {
-            function HttpRequestFactory() {
-            }
-            HttpRequestFactory.getInstance = function () {
-                if (this._instance === undefined) {
-                    this._instance = new HttpRequestFactory();
-                }
-                return this._instance;
-            };
-            HttpRequestFactory.prototype.getHttpRequestType = function (httpRequestType) {
+            function HttpRequestFactory(httpRequestType) {
                 if (httpRequestType === void 0) { httpRequestType = HTTP_REQUEST_TYPE.FETCH; }
-                switch (httpRequestType) {
+                this.httpRequestType = httpRequestType;
+            }
+            HttpRequestFactory.prototype.getHttpRequestType = function () {
+                switch (this.httpRequestType) {
                     case HTTP_REQUEST_TYPE.XHR:
-                        return new http.XhrRequest();
+                        return new request.XhrRequest();
                     case HTTP_REQUEST_TYPE.FETCH:
-                        return new http.FetchRequest();
+                        return new request.FetchRequest();
                 }
             };
             return HttpRequestFactory;
         }());
-        http.HttpRequestFactory = HttpRequestFactory;
-    })(http = core.http || (core.http = {}));
+        request.HttpRequestFactory = HttpRequestFactory;
+    })(request = core.request || (core.request = {}));
 })(core || (core = {}));
-/// <reference path='../core/http/HttpRequestFactory.ts' />
+/// <reference path='../core/request/HttpRequestFactory.ts' />
 var utils;
 (function (utils) {
-    var HTTP_REQUEST_TYPE = core.http.HTTP_REQUEST_TYPE;
-    var HttpRequestFactory = core.http.HttpRequestFactory;
+    var HttpRequestFactory = core.request.HttpRequestFactory;
+    var HTTP_REQUEST_TYPE = core.request.HTTP_REQUEST_TYPE;
     /**
      * Singleton class used to make http requests
      */
     var HttpUtils = /** @class */ (function () {
         function HttpUtils() {
-            this.httpRequest = HttpRequestFactory.getInstance().getHttpRequestType(HTTP_REQUEST_TYPE.XHR);
+            var httpRequestFactory = new HttpRequestFactory(HTTP_REQUEST_TYPE.XHR);
+            this.httpRequest = httpRequestFactory.getHttpRequestType();
         }
         /**
          * HttpUtils single instance object
@@ -144,23 +70,202 @@ var utils;
     }());
     utils.HttpUtils = HttpUtils;
 })(utils || (utils = {}));
-/// <reference path='BasePage.ts' />
-/// <reference path='../utils/Utils.ts' />
+var core;
+(function (core) {
+    var database;
+    (function (database) {
+        var ManageDatabase = /** @class */ (function () {
+            function ManageDatabase(dbName, osInfos) {
+                this.dbName = dbName;
+                this.osInfos = osInfos;
+                this.dbFactory = window.indexedDB;
+            }
+            ManageDatabase.prototype.initDB = function () {
+                var _this = this;
+                return new Promise(function (resolve, reject) {
+                    var dbReq = _this.dbFactory.open(_this.dbName);
+                    dbReq.onupgradeneeded = function () {
+                        _this.db = dbReq.result;
+                        for (var _i = 0, _a = _this.osInfos; _i < _a.length; _i++) {
+                            var osInfo = _a[_i];
+                            var params = { keyPath: osInfo.primaryFieldName };
+                            var objectStore = _this.db.createObjectStore(osInfo.storeName, params);
+                            objectStore.createIndex(osInfo.primaryIndexName, osInfo.primaryFieldName);
+                        }
+                        var trans = dbReq.transaction;
+                        trans.oncomplete = function () {
+                            resolve(_this.db);
+                        };
+                    };
+                    dbReq.onsuccess = function () {
+                        _this.db = dbReq.result;
+                        resolve(_this.db);
+                    };
+                    dbReq.onerror = function (ev) {
+                        reject(ev);
+                    };
+                });
+            };
+            return ManageDatabase;
+        }());
+        database.ManageDatabase = ManageDatabase;
+    })(database = core.database || (core.database = {}));
+})(core || (core = {}));
+var core;
+(function (core) {
+    var database;
+    (function (database) {
+        var ManageTable = /** @class */ (function () {
+            function ManageTable(db, osInfo) {
+                this.db = db;
+                this.osInfo = osInfo;
+            }
+            ManageTable.prototype.addEntity = function (objToAdd) {
+                var _this = this;
+                return new Promise(function (resolve, reject) {
+                    var trans = _this.db.transaction(_this.osInfo.storeName, 'readwrite');
+                    var objectStore = trans.objectStore(_this.osInfo.storeName);
+                    var dbReq = objectStore.add(objToAdd);
+                    dbReq.onsuccess = function () {
+                        resolve();
+                    };
+                    dbReq.onerror = function (ev) {
+                        reject(ev);
+                    };
+                });
+            };
+            ManageTable.prototype.updateEntity = function (objToUpdate) {
+                var _this = this;
+                return new Promise(function (resolve, reject) {
+                    var trans = _this.db.transaction(_this.osInfo.storeName, 'readwrite');
+                    var objectStore = trans.objectStore(_this.osInfo.storeName);
+                    var dbIndex = objectStore.index(_this.osInfo.primaryIndexName);
+                    var dbReq = dbIndex.get(objToUpdate.id);
+                    dbReq.onsuccess = function () {
+                        var updReq = objectStore.put(objToUpdate);
+                        updReq.onsuccess = function () {
+                            resolve();
+                        };
+                        updReq.onerror = function (ev) {
+                            reject(ev);
+                        };
+                    };
+                    dbReq.onerror = function (ev) {
+                        reject(ev);
+                    };
+                });
+            };
+            ManageTable.prototype.readEntity = function (id) {
+                var _this = this;
+                return new Promise(function (resolve, reject) {
+                    var trans = _this.db.transaction(_this.osInfo.storeName, 'readonly');
+                    var objectStore = trans.objectStore(_this.osInfo.storeName);
+                    var dbIndex = objectStore.index(_this.osInfo.primaryIndexName);
+                    var dbReq = dbIndex.get(id);
+                    dbReq.onsuccess = function (obj) {
+                        resolve(obj.currentTarget.result);
+                    };
+                    dbReq.onerror = function (ev) {
+                        reject(ev);
+                    };
+                });
+            };
+            ManageTable.prototype.getAllEntities = function () {
+                var _this = this;
+                return new Promise(function (resolve, reject) {
+                    var trans = _this.db.transaction(_this.osInfo.storeName, 'readonly');
+                    var objectStore = trans.objectStore(_this.osInfo.storeName);
+                    var dbReq = objectStore.getAll();
+                    dbReq.onsuccess = function (obj) {
+                        resolve(obj.currentTarget.result);
+                    };
+                    dbReq.onerror = function (ev) {
+                        reject(ev);
+                    };
+                });
+            };
+            return ManageTable;
+        }());
+        database.ManageTable = ManageTable;
+    })(database = core.database || (core.database = {}));
+})(core || (core = {}));
 /// <reference path='../utils/HttpUtils.ts' />
-var Pages;
-(function (Pages) {
-    var BasePage = Pages.BasePage;
-    // import HttpUtils = Utils.HttpUtils;
+/// <reference path='../core/database/ManageDatabase.ts' />
+/// <reference path='../core/database/ManageTable.ts' />
+var pages;
+(function (pages) {
+    var HttpUtils = utils.HttpUtils;
+    var ManageDatabase = core.database.ManageDatabase;
+    var ManageTable = core.database.ManageTable;
+    var WelcomePage = /** @class */ (function () {
+        function WelcomePage() {
+            HttpUtils.getInstance().requestInternal('./welcome.html')
+                .then(function (text) {
+                document.getElementById('mainContainer').innerHTML = text;
+            });
+            var osInfo = {
+                storeName: 'TestStore',
+                primaryFieldName: 'id',
+                primaryIndexName: 'TestIdIndex'
+            };
+            var md = new ManageDatabase('testDB', [osInfo]);
+            md.initDB().then(function (db) {
+                var mt = new ManageTable(db, osInfo);
+                mt.addEntity(new TestEntity('Test1', 'value1', '1'));
+                mt.addEntity(new TestEntity('Test2', 'value2', '2'));
+                mt.addEntity(new TestEntity('Test3', 'value3', '3'));
+                mt.updateEntity(new TestEntity('Test2Test2', 'value2value2', '2'));
+                mt.readEntity('2').then(function (te) {
+                    console.log('READ\n' + te.name);
+                });
+                mt.getAllEntities().then(function (tes) {
+                    console.log('READ ALL');
+                    for (var _i = 0, tes_1 = tes; _i < tes_1.length; _i++) {
+                        var te = tes_1[_i];
+                        console.log(te.name);
+                    }
+                });
+            });
+        }
+        return WelcomePage;
+    }());
+    pages.WelcomePage = WelcomePage;
+    var TestEntity = /** @class */ (function () {
+        function TestEntity(name, value, id) {
+            this.name = name;
+            this.value = value;
+            this.id = id;
+        }
+        return TestEntity;
+    }());
+})(pages || (pages = {}));
+var pages;
+(function (pages) {
+    var BasePage = /** @class */ (function () {
+        function BasePage() {
+            this.initVars();
+        }
+        /**
+         * Initialize the variables.
+         */
+        BasePage.prototype.initVars = function () {
+            this.mainContainer = document.getElementById('mainContainer');
+            this.loaderElem = document.getElementsByClassName('loader').item(0);
+        };
+        return BasePage;
+    }());
+    pages.BasePage = BasePage;
+})(pages || (pages = {}));
+/// <reference path='BasePage.ts' />
+/// <reference path='../utils/HttpUtils.ts' />
+var pages;
+(function (pages) {
+    var BasePage = pages.BasePage;
     var HttpUtils = utils.HttpUtils;
     var LoginPage = /** @class */ (function (_super) {
         __extends(LoginPage, _super);
         function LoginPage() {
             var _this = _super.call(this) || this;
-            // HttpUtils.fetchInternal('./login.html')
-            //     .then((text: string) => {
-            //         this.mainContainer.innerHTML = text;
-            //         this.initLoginVars();
-            //     });
             HttpUtils.getInstance().requestInternal('./login.html')
                 .then(function (text) {
                 _this.mainContainer.innerHTML = text;
@@ -194,14 +299,6 @@ var Pages;
                 ev.preventDefault();
                 return;
             }
-            // HttpUtils.fetchExternal(`https://api.123contactform.com/v2/token?email=${emailForm}&password=${passForm}`, Utils.FETH_METHOD.POST)
-            //     .then((data: Response200 | Response403) => {
-            //         if ('error' in data) {
-            //             this.handleError(data);
-            //         } else {
-            //             this.handleSuccess(data);
-            //         }
-            //     });
             HttpUtils.getInstance().requestExternal("https://api.123contactform.com/v2/token?email=" + emailForm + "&password=" + passForm)
                 .then(function (data) {
                 if ('error' in data) {
@@ -234,16 +331,16 @@ var Pages;
             window.sessionStorage.setItem('token', data.token);
             document.getElementById('mainContainer').innerHTML = '';
             this.mainContainer.innerHTML = this.loaderElem.innerHTML;
-            new Pages.WelcomePage();
+            new pages.WelcomePage();
         };
         return LoginPage;
     }(BasePage));
-    Pages.LoginPage = LoginPage;
-})(Pages || (Pages = {}));
+    pages.LoginPage = LoginPage;
+})(pages || (pages = {}));
 /// <reference path="./pages/WelcomePage.ts" />
 /// <reference path="./pages/LoginPage.ts" />
-var WelcomePage = Pages.WelcomePage;
-var LoginPage = Pages.LoginPage;
+var WelcomePage = pages.WelcomePage;
+var LoginPage = pages.LoginPage;
 var EntryPoint = /** @class */ (function () {
     function EntryPoint() {
         this.initVars();
@@ -255,7 +352,7 @@ var EntryPoint = /** @class */ (function () {
         }
     };
     EntryPoint.prototype.showCorrespondingPage = function () {
-        if (this.isLoggedIn) {
+        if (!this.isLoggedIn) {
             new WelcomePage();
         }
         else {
@@ -267,8 +364,8 @@ var EntryPoint = /** @class */ (function () {
 window.onload = function () { new EntryPoint(); };
 var core;
 (function (core) {
-    var http;
-    (function (http) {
+    var request;
+    (function (request) {
         var FetchRequest = /** @class */ (function () {
             function FetchRequest() {
             }
@@ -298,13 +395,13 @@ var core;
             };
             return FetchRequest;
         }());
-        http.FetchRequest = FetchRequest;
-    })(http = core.http || (core.http = {}));
+        request.FetchRequest = FetchRequest;
+    })(request = core.request || (core.request = {}));
 })(core || (core = {}));
 var core;
 (function (core) {
-    var http;
-    (function (http) {
+    var request;
+    (function (request) {
         var XhrRequest = /** @class */ (function () {
             function XhrRequest() {
             }
@@ -335,7 +432,7 @@ var core;
             };
             return XhrRequest;
         }());
-        http.XhrRequest = XhrRequest;
-    })(http = core.http || (core.http = {}));
+        request.XhrRequest = XhrRequest;
+    })(request = core.request || (core.request = {}));
 })(core || (core = {}));
 //# sourceMappingURL=bundle.js.map

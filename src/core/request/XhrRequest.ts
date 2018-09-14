@@ -1,4 +1,4 @@
-module core.http {
+module core.request {
     export class XhrRequest implements HttpRequest {
         public requestInternal(url: string): Promise<string> {
             return new Promise<string>((resolve: Function, reject: Function) => {
