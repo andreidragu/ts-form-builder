@@ -21,12 +21,11 @@ var core;
             HTTP_REQUEST_TYPE[HTTP_REQUEST_TYPE["FETCH"] = 1] = "FETCH";
         })(HTTP_REQUEST_TYPE = request.HTTP_REQUEST_TYPE || (request.HTTP_REQUEST_TYPE = {}));
         var HttpRequestFactory = /** @class */ (function () {
-            function HttpRequestFactory(httpRequestType) {
-                if (httpRequestType === void 0) { httpRequestType = HTTP_REQUEST_TYPE.FETCH; }
-                this.httpRequestType = httpRequestType;
+            function HttpRequestFactory() {
             }
-            HttpRequestFactory.prototype.getHttpRequestType = function () {
-                switch (this.httpRequestType) {
+            HttpRequestFactory.prototype.getHttpRequestType = function (httpRequestType) {
+                if (httpRequestType === void 0) { httpRequestType = HTTP_REQUEST_TYPE.FETCH; }
+                switch (httpRequestType) {
                     case HTTP_REQUEST_TYPE.XHR:
                         return new request.XhrRequest();
                     case HTTP_REQUEST_TYPE.FETCH:
@@ -48,8 +47,8 @@ var utils;
      */
     var HttpUtils = /** @class */ (function () {
         function HttpUtils() {
-            var httpRequestFactory = new HttpRequestFactory(HTTP_REQUEST_TYPE.XHR);
-            this.httpRequest = httpRequestFactory.getHttpRequestType();
+            var httpRequestFactory = new HttpRequestFactory();
+            this.httpRequest = httpRequestFactory.getHttpRequestType(HTTP_REQUEST_TYPE.XHR);
         }
         /**
          * HttpUtils single instance object
@@ -88,9 +87,9 @@ var core;
                         _this.db = dbReq.result;
                         for (var _i = 0, _a = _this.osInfos; _i < _a.length; _i++) {
                             var osInfo = _a[_i];
-                            var params = { keyPath: osInfo.primaryFieldName };
+                            var params = { keyPath: osInfo.primaryFieldName, autoIncrement: true };
                             var objectStore = _this.db.createObjectStore(osInfo.storeName, params);
-                            objectStore.createIndex(osInfo.primaryIndexName, osInfo.primaryFieldName);
+                            objectStore.createIndex(osInfo.primaryIndexName, osInfo.primaryFieldName, { unique: true });
                         }
                         var trans = dbReq.transaction;
                         trans.oncomplete = function () {
@@ -195,49 +194,41 @@ var core;
 var pages;
 (function (pages) {
     var HttpUtils = utils.HttpUtils;
-    var ManageDatabase = core.database.ManageDatabase;
-    var ManageTable = core.database.ManageTable;
     var WelcomePage = /** @class */ (function () {
         function WelcomePage() {
             HttpUtils.getInstance().requestInternal('./welcome.html')
                 .then(function (text) {
                 document.getElementById('mainContainer').innerHTML = text;
             });
-            var osInfo = {
-                storeName: 'TestStore',
-                primaryFieldName: 'id',
-                primaryIndexName: 'TestIdIndex'
-            };
-            var md = new ManageDatabase('testDB', [osInfo]);
-            md.initDB().then(function (db) {
-                var mt = new ManageTable(db, osInfo);
-                mt.addEntity(new TestEntity('Test1', 'value1', '1'));
-                mt.addEntity(new TestEntity('Test2', 'value2', '2'));
-                mt.addEntity(new TestEntity('Test3', 'value3', '3'));
-                mt.updateEntity(new TestEntity('Test2Test2', 'value2value2', '2'));
-                mt.readEntity('2').then(function (te) {
-                    console.log('READ\n' + te.name);
-                });
-                mt.getAllEntities().then(function (tes) {
-                    console.log('READ ALL');
-                    for (var _i = 0, tes_1 = tes; _i < tes_1.length; _i++) {
-                        var te = tes_1[_i];
-                        console.log(te.name);
-                    }
-                });
-            });
+            // const osInfo: ObjectStoreInfo = {
+            //     storeName: 'TestStore',
+            //     primaryFieldName: 'id',
+            //     primaryIndexName: 'TestIdIndex'
+            // };
+            // const md: ManageDatabase = new ManageDatabase('testDB', [osInfo]);
+            // md.initDB().then((db: IDBDatabase) => {
+            //     const mt: ManageTable<TestEntity> = new ManageTable<TestEntity>(db, osInfo);
+            //     mt.addEntity(new TestEntity('Test1', 'value1', '1'));
+            //     mt.addEntity(new TestEntity('Test2', 'value2', '2'));
+            //     mt.addEntity(new TestEntity('Test3', 'value3', '3'));
+            //     mt.updateEntity(new TestEntity('Test2Test2', 'value2value2', '2'));
+            //     mt.readEntity('2').then((te: TestEntity) => {
+            //         console.log('READ\n' + te.name);
+            //     });
+            //     mt.getAllEntities().then((tes: TestEntity[]) => {
+            //         console.log('READ ALL');
+            //         for (const te of tes) {
+            //             console.log(te.name);
+            //         }
+            //     });
+            // });
         }
         return WelcomePage;
     }());
     pages.WelcomePage = WelcomePage;
-    var TestEntity = /** @class */ (function () {
-        function TestEntity(name, value, id) {
-            this.name = name;
-            this.value = value;
-            this.id = id;
-        }
-        return TestEntity;
-    }());
+    // class TestEntity {
+    //     constructor(public name: string, public value: string, public id: string) { }
+    // }
 })(pages || (pages = {}));
 var pages;
 (function (pages) {
@@ -256,20 +247,94 @@ var pages;
     }());
     pages.BasePage = BasePage;
 })(pages || (pages = {}));
+var utils;
+(function (utils) {
+    var ManageDatabase = core.database.ManageDatabase;
+    var ManageTable = core.database.ManageTable;
+    var DBUtils = /** @class */ (function () {
+        function DBUtils() {
+        }
+        /**
+         * DBUtils single instance object
+         */
+        DBUtils.getInstance = function () {
+            if (this._instance === undefined) {
+                this._instance = new DBUtils();
+            }
+            return this._instance;
+        };
+        DBUtils.prototype.initDatabase = function () {
+            var _this = this;
+            var osInfo = {
+                primaryFieldName: 'LoginId',
+                primaryIndexName: 'LoginIdIndex',
+                storeName: 'LoginStore'
+            };
+            var md = new ManageDatabase('tsFormBuilderDB', [osInfo]);
+            return new Promise(function (resolve, reject) {
+                md.initDB()
+                    .then(function (db) {
+                    _this._manageLoginTable = new ManageTable(db, osInfo);
+                    resolve();
+                })
+                    .catch(function (ev) {
+                    reject(ev);
+                });
+            });
+        };
+        Object.defineProperty(DBUtils.prototype, "manageLoginTable", {
+            get: function () {
+                if (this._manageLoginTable) {
+                    return this._manageLoginTable;
+                }
+                else {
+                    throw new Error('Please initialize database in your EntryPoint class');
+                }
+            },
+            enumerable: true,
+            configurable: true
+        });
+        return DBUtils;
+    }());
+    utils.DBUtils = DBUtils;
+})(utils || (utils = {}));
+var core;
+(function (core) {
+    var database;
+    (function (database) {
+        var LoginEntity = /** @class */ (function () {
+            function LoginEntity() {
+                this.nrOfFailedTries = 0;
+                this.loginDates = [];
+                this.isLockedOut = false;
+            }
+            return LoginEntity;
+        }());
+        database.LoginEntity = LoginEntity;
+    })(database = core.database || (core.database = {}));
+})(core || (core = {}));
 /// <reference path='BasePage.ts' />
+/// <reference path='../utils/DBUtils.ts' />
+/// <reference path='../core/database/LoginEntity.ts' />
 /// <reference path='../utils/HttpUtils.ts' />
 var pages;
 (function (pages) {
     var BasePage = pages.BasePage;
+    var DBUtils = utils.DBUtils;
+    var LoginEntity = core.database.LoginEntity;
     var HttpUtils = utils.HttpUtils;
     var LoginPage = /** @class */ (function (_super) {
         __extends(LoginPage, _super);
         function LoginPage() {
             var _this = _super.call(this) || this;
-            HttpUtils.getInstance().requestInternal('./login.html')
-                .then(function (text) {
-                _this.mainContainer.innerHTML = text;
-                _this.initLoginVars();
+            DBUtils.getInstance().manageLoginTable.getAllEntities()
+                .then(function (loginEntities) {
+                _this.loginEntities = loginEntities;
+                HttpUtils.getInstance().requestInternal('./login.html')
+                    .then(function (text) {
+                    _this.mainContainer.innerHTML = text;
+                    _this.initLoginVars();
+                });
             });
             return _this;
         }
@@ -294,18 +359,45 @@ var pages;
             var passForm = formData.get('password');
             document.getElementById('loginFormFieldset').disabled = true;
             this.mainContainer.appendChild(this.loaderElem);
-            if (emailForm === 'andrei.catalin7@gmail.com') {
-                this.handleError({ error: { message: 'This user is locked. Too many tries!' } });
-                ev.preventDefault();
-                return;
+            var loginEntity = this.loginEntities.find(function (obj) {
+                return obj.email === emailForm.toString();
+            });
+            if (loginEntity && loginEntity.isLockedOut) {
+                loginEntity.loginDates.push("Locked on: " + new Date().toDateString());
+                DBUtils.getInstance().manageLoginTable.updateEntity(loginEntity)
+                    .then(function () {
+                    _this.handleError({ error: { message: 'This user is locked. Too many tries!' } });
+                    ev.preventDefault();
+                    return;
+                });
+            }
+            else if (!loginEntity) {
+                loginEntity = new LoginEntity();
+                loginEntity.id = loginEntity.email = emailForm.toString();
+                this.loginEntities.push(loginEntity);
             }
             HttpUtils.getInstance().requestExternal("https://api.123contactform.com/v2/token?email=" + emailForm + "&password=" + passForm)
                 .then(function (data) {
                 if ('error' in data) {
-                    _this.handleError(data);
+                    loginEntity.nrOfFailedTries++;
+                    if (loginEntity.nrOfFailedTries === 5) {
+                        loginEntity.isLockedOut = true;
+                    }
+                    DBUtils.getInstance().manageLoginTable.updateEntity(loginEntity)
+                        .then(function () {
+                        if (loginEntity.isLockedOut) {
+                            _this.handleError({ error: { message: 'This user is locked. Too many tries!' } });
+                        }
+                        else {
+                            _this.handleError(data);
+                        }
+                    });
                 }
                 else {
-                    _this.handleSuccess(data);
+                    DBUtils.getInstance().manageLoginTable.updateEntity(loginEntity)
+                        .then(function () {
+                        _this.handleSuccess(data);
+                    });
                 }
             });
             ev.preventDefault();
@@ -337,22 +429,27 @@ var pages;
     }(BasePage));
     pages.LoginPage = LoginPage;
 })(pages || (pages = {}));
-/// <reference path="./pages/WelcomePage.ts" />
-/// <reference path="./pages/LoginPage.ts" />
+/// <reference path='./pages/WelcomePage.ts' />
+/// <reference path='./pages/LoginPage.ts' />
+/// <reference path='./utils/DBUtils.ts' />
 var WelcomePage = pages.WelcomePage;
 var LoginPage = pages.LoginPage;
+var DBUtils = utils.DBUtils;
 var EntryPoint = /** @class */ (function () {
     function EntryPoint() {
         this.initVars();
-        this.showCorrespondingPage();
     }
     EntryPoint.prototype.initVars = function () {
+        var _this = this;
         if (window.sessionStorage.getItem('token')) {
             this.isLoggedIn = true;
         }
+        DBUtils.getInstance().initDatabase().then(function () {
+            _this.showCorrespondingPage();
+        });
     };
     EntryPoint.prototype.showCorrespondingPage = function () {
-        if (!this.isLoggedIn) {
+        if (this.isLoggedIn) {
             new WelcomePage();
         }
         else {

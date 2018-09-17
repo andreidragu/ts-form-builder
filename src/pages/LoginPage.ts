@@ -1,22 +1,31 @@
 /// <reference path='BasePage.ts' />
+/// <reference path='../utils/DBUtils.ts' />
+/// <reference path='../core/database/LoginEntity.ts' />
 /// <reference path='../utils/HttpUtils.ts' />
 
 module pages {
     import BasePage = pages.BasePage;
+    import DBUtils = utils.DBUtils;
+    import LoginEntity = core.database.LoginEntity;
     import HttpUtils = utils.HttpUtils;
     import Response200 = core.request.Response200;
     import Response403 = core.request.Response403;
 
     export class LoginPage extends BasePage {
+        private loginEntities: LoginEntity[];
         private loginForm: HTMLFormElement;
         private errorElem: HTMLElement;
 
         constructor() {
             super();
-            HttpUtils.getInstance().requestInternal('./login.html')
-                .then((text: string) => {
-                    this.mainContainer.innerHTML = text;
-                    this.initLoginVars();
+            DBUtils.getInstance().manageLoginTable.getAllEntities()
+                .then((loginEntities: LoginEntity[]) => {
+                    this.loginEntities = loginEntities;
+                    HttpUtils.getInstance().requestInternal('./login.html')
+                        .then((text: string) => {
+                            this.mainContainer.innerHTML = text;
+                            this.initLoginVars();
+                        });
                 });
         }
 
@@ -44,20 +53,46 @@ module pages {
             (<HTMLFieldSetElement>document.getElementById('loginFormFieldset')).disabled = true;
             this.mainContainer.appendChild(this.loaderElem);
 
-            if (emailForm === 'andrei.catalin7@gmail.com') {
-                this.handleError({ error: { message: 'This user is locked. Too many tries!' } });
-                ev.preventDefault();
-                return;
+            let loginEntity: LoginEntity = this.loginEntities.find((obj: LoginEntity) => {
+                return obj.email === emailForm.toString();
+            });
+            if (loginEntity && loginEntity.isLockedOut) {
+                loginEntity.loginDates.push(`Locked on: ${new Date().toDateString()}`);
+                DBUtils.getInstance().manageLoginTable.updateEntity(loginEntity)
+                    .then(() => {
+                        this.handleError({ error: { message: 'This user is locked. Too many tries!' } });
+                        ev.preventDefault();
+                        return;
+                    });
+            } else if (!loginEntity) {
+                loginEntity = new LoginEntity();
+                loginEntity.id = loginEntity.email = emailForm.toString();
+                this.loginEntities.push(loginEntity)
             }
 
             HttpUtils.getInstance().requestExternal(`https://api.123contactform.com/v2/token?email=${emailForm}&password=${passForm}`)
                 .then((data: Response200 | Response403) => {
                     if ('error' in data) {
-                        this.handleError(data);
+                        loginEntity.nrOfFailedTries++;
+                        if (loginEntity.nrOfFailedTries === 5) {
+                            loginEntity.isLockedOut = true;
+                        }
+                        DBUtils.getInstance().manageLoginTable.updateEntity(loginEntity)
+                            .then(() => {
+                                if (loginEntity.isLockedOut) {
+                                    this.handleError({ error: { message: 'This user is locked. Too many tries!' } });
+                                } else {
+                                    this.handleError(data);
+                                }
+                            });
                     } else {
-                        this.handleSuccess(data);
+                        DBUtils.getInstance().manageLoginTable.updateEntity(loginEntity)
+                            .then(() => {
+                                this.handleSuccess(data);
+                            });
                     }
                 });
+
             ev.preventDefault();
         }
 

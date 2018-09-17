@@ -18,9 +18,9 @@ module core.database {
                 dbReq.onupgradeneeded = () => {
                     this.db = dbReq.result;
                     for (const osInfo of this.osInfos) {
-                        const params: IDBObjectStoreParameters = { keyPath: osInfo.primaryFieldName };
+                        const params: IDBObjectStoreParameters = { keyPath: osInfo.primaryFieldName, autoIncrement: true };
                         const objectStore: IDBObjectStore = this.db.createObjectStore(osInfo.storeName, params);
-                        objectStore.createIndex(osInfo.primaryIndexName, osInfo.primaryFieldName);
+                        objectStore.createIndex(osInfo.primaryIndexName, osInfo.primaryFieldName, { unique: true });
                     }
 
                     const trans: IDBTransaction = dbReq.transaction;

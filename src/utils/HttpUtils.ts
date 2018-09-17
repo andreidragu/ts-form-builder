@@ -11,14 +11,13 @@ module utils {
      * Singleton class used to make http requests
      */
     export class HttpUtils {
+        private static _instance: HttpUtils;
         private httpRequest: HttpRequest;
 
         private constructor() {
-            const httpRequestFactory: HttpRequestFactory = new HttpRequestFactory(HTTP_REQUEST_TYPE.XHR);
-            this.httpRequest = httpRequestFactory.getHttpRequestType();
+            const httpRequestFactory: HttpRequestFactory = new HttpRequestFactory();
+            this.httpRequest = httpRequestFactory.getHttpRequestType(HTTP_REQUEST_TYPE.XHR);
         }
-
-        private static _instance: HttpUtils;
 
         /**
          * HttpUtils single instance object
