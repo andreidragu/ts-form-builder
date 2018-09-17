@@ -326,6 +326,7 @@ var pages;
         }
         WelcomePage.prototype.initWelcomeVars = function () {
             var _this = this;
+            this.welcomeTable = document.getElementById('welcomeTable');
             this.getAllFormsAndSubmissions().then(function (formEntities) {
                 _this.formEntities = formEntities;
                 _this.populateWelcomeTable();
@@ -334,14 +335,13 @@ var pages;
                     DBUtils.getInstance().manageFormTable.updateEntity(formEntity);
                 }
             });
-            this.welcomeTable = document.getElementById('welcomeTable');
             this.populateWelcomeTable();
         };
         WelcomePage.prototype.populateWelcomeTable = function () {
             var earliest = Date.parse(this.formEntities[0].submissions[0].date);
             var latest = earliest;
-            var firstFormName = '';
-            var lastFormName = '';
+            var firstFormName = '', firstFormDate = '';
+            var lastFormName = '', lastFormDate = '';
             for (var _i = 0, _a = this.formEntities; _i < _a.length; _i++) {
                 var formEntity = _a[_i];
                 for (var _b = 0, _c = formEntity.submissions; _b < _c.length; _b++) {
@@ -350,18 +350,22 @@ var pages;
                     if (submissionDate < earliest) {
                         earliest = submissionDate;
                         firstFormName = formEntity.name;
+                        firstFormDate = submission.date;
                     }
                     if (submissionDate > latest) {
                         latest = submissionDate;
                         lastFormName = formEntity.name;
+                        lastFormDate = submission.date;
                     }
                 }
             }
-            var row = this.welcomeTable.tBodies[0].insertRow(0);
-            var first = row.insertCell(0);
-            var last = row.insertCell(1);
-            first.innerText = "The first submission was done on " + this.formatDate(new Date(earliest)) + " on " + firstFormName;
-            last.innerText = "The last submission was done on " + this.formatDate(new Date(latest)) + " on " + lastFormName;
+            var row = this.welcomeTable.tBodies[0].rows[0];
+            var first = row.cells[0];
+            var last = row.cells[1];
+            // first.innerText = `The first submission was done on ${this.formatDate(new Date(earliest))} on ${firstFormName}`;
+            // last.innerText = `The last submission was done on ${this.formatDate(new Date(latest))} on ${lastFormName}`;
+            first.innerText = "The first submission was done on " + firstFormDate + " on " + firstFormName;
+            last.innerText = "The last submission was done on " + lastFormDate + " on " + lastFormName;
         };
         WelcomePage.prototype.getAllFormsAndSubmissions = function () {
             return new Promise(function (resolve, reject) {
@@ -395,15 +399,6 @@ var pages;
                     }
                 });
             });
-        };
-        WelcomePage.prototype.formatDate = function (date) {
-            var year = date.getFullYear();
-            var month = date.getUTCMonth() > 9 ? date.getUTCMonth().toString() : "0" + date.getUTCMonth();
-            var day = date.getUTCDay() > 9 ? date.getUTCDay().toString() : "0" + date.getUTCDay();
-            var hour = date.getUTCHours() > 9 ? date.getUTCHours().toString() : "0" + date.getUTCHours();
-            var minutes = date.getUTCMinutes() > 9 ? date.getUTCMinutes().toString() : "0" + date.getUTCMinutes();
-            var seconds = date.getUTCSeconds() > 9 ? date.getUTCSeconds().toString() : "0" + date.getUTCSeconds();
-            return year + "-" + month + "-" + day + " " + hour + ":" + minutes + ":" + seconds;
         };
         return WelcomePage;
     }(pages.BasePage));
