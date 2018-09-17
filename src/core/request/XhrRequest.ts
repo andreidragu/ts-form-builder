@@ -14,11 +14,11 @@ module core.request {
             });
         }
 
-        public requestExternal(url: string): Promise<Response200 | Response403> {
+        public requestExternal(url: string, method: string = 'POST'): Promise<Response200 | Response403> {
             return new Promise<Response200 | Response403>((resolve: Function, reject: Function) => {
                 const xhr: XMLHttpRequest = new XMLHttpRequest();
 
-                xhr.open('POST', url);
+                xhr.open(method, url);
                 xhr.setRequestHeader('Content-Type', 'application/json');
 
                 xhr.onload = (evt: Event) => {

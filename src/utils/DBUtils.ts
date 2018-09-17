@@ -3,11 +3,13 @@ module utils {
     import ManageDatabase = core.database.ManageDatabase;
     import ManageTable = core.database.ManageTable;
     import LoginEntity = core.database.LoginEntity;
+    import FormEntity = core.database.FormEntity;
 
     export class DBUtils {
         private static _instance: DBUtils;
 
         private _manageLoginTable: ManageTable<LoginEntity>;
+        private _manageFormTable: ManageTable<FormEntity>;
 
         private constructor() { }
 
@@ -23,15 +25,21 @@ module utils {
 
         public initDatabase(): Promise<void> {
             const loginStoreInfo: ObjectStoreInfo = {
+                storeName: 'LoginStore',
                 primaryFieldName: 'email',
-                primaryIndexName: 'emailIndex',
-                storeName: 'LoginStore'
+                primaryIndexName: 'emailIndex'
             };
-            const md: ManageDatabase = new ManageDatabase('tsFormBuilderDB', [loginStoreInfo]);
+            const formStoreInfo: ObjectStoreInfo = {
+                storeName: 'FormStore',
+                primaryFieldName: 'id',
+                primaryIndexName: 'idIndex'
+            };
+            const md: ManageDatabase = new ManageDatabase('tsFormBuilderDB', [loginStoreInfo, formStoreInfo]);
             return new Promise<void>((resolve: Function, reject: Function) => {
                 md.initDB()
                     .then((db: IDBDatabase) => {
                         this._manageLoginTable = new ManageTable<LoginEntity>(db, loginStoreInfo);
+                        this._manageFormTable = new ManageTable<FormEntity>(db, formStoreInfo);
                         resolve();
                     })
                     .catch((ev: Event) => {
@@ -43,6 +51,14 @@ module utils {
         public get manageLoginTable(): ManageTable<LoginEntity> {
             if (this._manageLoginTable) {
                 return this._manageLoginTable;
+            } else {
+                throw new Error('Please initialize database in your EntryPoint class');
+            }
+        }
+
+        public get manageFormTable(): ManageTable<FormEntity> {
+            if (this._manageFormTable) {
+                return this._manageFormTable;
             } else {
                 throw new Error('Please initialize database in your EntryPoint class');
             }

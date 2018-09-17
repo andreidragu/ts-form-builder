@@ -2,6 +2,7 @@
 /// <reference path='./core/database/ManageTable.ts' />
 /// <reference path='./core/database/ObjectStoreInfo.ts' />
 /// <reference path='./core/database/LoginEntity.ts' />
+/// <reference path='./core/database/FormEntity.ts' />
 
 /// <reference path='./core/request/HttpRequestFactory.ts' />
 

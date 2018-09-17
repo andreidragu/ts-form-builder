@@ -150,6 +150,18 @@ var core;
 })(core || (core = {}));
 var core;
 (function (core) {
+    var database;
+    (function (database) {
+        var FormEntity = /** @class */ (function () {
+            function FormEntity() {
+            }
+            return FormEntity;
+        }());
+        database.FormEntity = FormEntity;
+    })(database = core.database || (core.database = {}));
+})(core || (core = {}));
+var core;
+(function (core) {
     var request;
     (function (request) {
         var HTTP_REQUEST_TYPE;
@@ -215,31 +227,13 @@ var utils;
         HttpUtils.prototype.requestInternal = function (url) {
             return this.httpRequest.requestInternal(url);
         };
-        HttpUtils.prototype.requestExternal = function (url) {
-            return this.httpRequest.requestExternal(url);
+        HttpUtils.prototype.requestExternal = function (url, method) {
+            return this.httpRequest.requestExternal(url, method);
         };
         return HttpUtils;
     }());
     utils.HttpUtils = HttpUtils;
 })(utils || (utils = {}));
-/// <reference path='../utils/HttpUtils.ts' />
-var pages;
-(function (pages) {
-    var HttpUtils = utils.HttpUtils;
-    var WelcomePage = /** @class */ (function (_super) {
-        __extends(WelcomePage, _super);
-        function WelcomePage() {
-            var _this = _super.call(this) || this;
-            HttpUtils.getInstance().requestInternal('./welcome.html')
-                .then(function (text) {
-                document.getElementById('mainContainer').innerHTML = text;
-            });
-            return _this;
-        }
-        return WelcomePage;
-    }(pages.BasePage));
-    pages.WelcomePage = WelcomePage;
-})(pages || (pages = {}));
 var utils;
 (function (utils) {
     var ManageDatabase = core.database.ManageDatabase;
@@ -259,15 +253,21 @@ var utils;
         DBUtils.prototype.initDatabase = function () {
             var _this = this;
             var loginStoreInfo = {
+                storeName: 'LoginStore',
                 primaryFieldName: 'email',
-                primaryIndexName: 'emailIndex',
-                storeName: 'LoginStore'
+                primaryIndexName: 'emailIndex'
             };
-            var md = new ManageDatabase('tsFormBuilderDB', [loginStoreInfo]);
+            var formStoreInfo = {
+                storeName: 'FormStore',
+                primaryFieldName: 'id',
+                primaryIndexName: 'idIndex'
+            };
+            var md = new ManageDatabase('tsFormBuilderDB', [loginStoreInfo, formStoreInfo]);
             return new Promise(function (resolve, reject) {
                 md.initDB()
                     .then(function (db) {
                     _this._manageLoginTable = new ManageTable(db, loginStoreInfo);
+                    _this._manageFormTable = new ManageTable(db, formStoreInfo);
                     resolve();
                 })
                     .catch(function (ev) {
@@ -287,10 +287,128 @@ var utils;
             enumerable: true,
             configurable: true
         });
+        Object.defineProperty(DBUtils.prototype, "manageFormTable", {
+            get: function () {
+                if (this._manageFormTable) {
+                    return this._manageFormTable;
+                }
+                else {
+                    throw new Error('Please initialize database in your EntryPoint class');
+                }
+            },
+            enumerable: true,
+            configurable: true
+        });
         return DBUtils;
     }());
     utils.DBUtils = DBUtils;
 })(utils || (utils = {}));
+/// <reference path='../utils/HttpUtils.ts' />
+/// <reference path='../utils/DBUtils.ts' />
+var pages;
+(function (pages) {
+    var DBUtils = utils.DBUtils;
+    var HttpUtils = utils.HttpUtils;
+    var WelcomePage = /** @class */ (function (_super) {
+        __extends(WelcomePage, _super);
+        function WelcomePage() {
+            var _this = _super.call(this) || this;
+            DBUtils.getInstance().manageFormTable.getAllEntities()
+                .then(function (formEntities) {
+                _this.formEntities = formEntities;
+                HttpUtils.getInstance().requestInternal('./welcome.html')
+                    .then(function (text) {
+                    document.getElementById('mainContainer').innerHTML = text;
+                    _this.initWelcomeVars();
+                });
+            });
+            return _this;
+        }
+        WelcomePage.prototype.initWelcomeVars = function () {
+            var _this = this;
+            this.getAllFormsAndSubmissions().then(function (formEntities) {
+                _this.formEntities = formEntities;
+                _this.populateWelcomeTable();
+                for (var _i = 0, formEntities_1 = formEntities; _i < formEntities_1.length; _i++) {
+                    var formEntity = formEntities_1[_i];
+                    DBUtils.getInstance().manageFormTable.updateEntity(formEntity);
+                }
+            });
+            this.welcomeTable = document.getElementById('welcomeTable');
+            this.populateWelcomeTable();
+        };
+        WelcomePage.prototype.populateWelcomeTable = function () {
+            var earliest = Date.parse(this.formEntities[0].submissions[0].date);
+            var latest = earliest;
+            var firstFormName = '';
+            var lastFormName = '';
+            for (var _i = 0, _a = this.formEntities; _i < _a.length; _i++) {
+                var formEntity = _a[_i];
+                for (var _b = 0, _c = formEntity.submissions; _b < _c.length; _b++) {
+                    var submission = _c[_b];
+                    var submissionDate = Date.parse(submission.date);
+                    if (submissionDate < earliest) {
+                        earliest = submissionDate;
+                        firstFormName = formEntity.name;
+                    }
+                    if (submissionDate > latest) {
+                        latest = submissionDate;
+                        lastFormName = formEntity.name;
+                    }
+                }
+            }
+            var row = this.welcomeTable.tBodies[0].insertRow(0);
+            var first = row.insertCell(0);
+            var last = row.insertCell(1);
+            first.innerText = "The first submission was done on " + this.formatDate(new Date(earliest)) + " on " + firstFormName;
+            last.innerText = "The last submission was done on " + this.formatDate(new Date(latest)) + " on " + lastFormName;
+        };
+        WelcomePage.prototype.getAllFormsAndSubmissions = function () {
+            return new Promise(function (resolve, reject) {
+                HttpUtils.getInstance().requestExternal("https://api.123contactform.com/v2/forms?JWT=" + window.sessionStorage.getItem('token'), 'GET')
+                    .then(function (formData) {
+                    if ('error' in formData) {
+                        console.log(formData.error.message);
+                        reject(formData);
+                    }
+                    else {
+                        var formEntities_2 = formData.data;
+                        var totalNrOfForms_1 = formData.meta.pagination.total;
+                        var _loop_1 = function (i) {
+                            HttpUtils.getInstance().requestExternal("https://api.123contactform.com/v2/forms/" + formEntities_2[i].id + "/submissions?JWT=" + window.sessionStorage.getItem('token'), 'GET')
+                                .then(function (submissionsData) {
+                                if ('error' in submissionsData) {
+                                    console.log(submissionsData.error.message);
+                                    reject(submissionsData);
+                                }
+                                else {
+                                    formEntities_2[i].submissions = submissionsData.data;
+                                    if (i === totalNrOfForms_1 - 1) {
+                                        resolve(formEntities_2);
+                                    }
+                                }
+                            });
+                        };
+                        for (var i = 0; i < totalNrOfForms_1; i++) {
+                            _loop_1(i);
+                        }
+                    }
+                });
+            });
+        };
+        WelcomePage.prototype.formatDate = function (date) {
+            var year = date.getFullYear();
+            var month = date.getUTCMonth() > 9 ? date.getUTCMonth().toString() : "0" + date.getUTCMonth();
+            var day = date.getUTCDay() > 9 ? date.getUTCDay().toString() : "0" + date.getUTCDay();
+            var hour = date.getUTCHours() > 9 ? date.getUTCHours().toString() : "0" + date.getUTCHours();
+            var minutes = date.getUTCMinutes() > 9 ? date.getUTCMinutes().toString() : "0" + date.getUTCMinutes();
+            var seconds = date.getUTCSeconds() > 9 ? date.getUTCSeconds().toString() : "0" + date.getUTCSeconds();
+            return year + "-" + month + "-" + day + " " + hour + ":" + minutes + ":" + seconds;
+        };
+        return WelcomePage;
+    }(pages.BasePage));
+    pages.WelcomePage = WelcomePage;
+})(pages || (pages = {}));
 /// <reference path='../utils/HttpUtils.ts' />
 /// <reference path='../utils/DBUtils.ts' />
 var pages;
@@ -412,6 +530,7 @@ var pages;
 /// <reference path='./core/database/ManageTable.ts' />
 /// <reference path='./core/database/ObjectStoreInfo.ts' />
 /// <reference path='./core/database/LoginEntity.ts' />
+/// <reference path='./core/database/FormEntity.ts' />
 /// <reference path='./core/request/HttpRequestFactory.ts' />
 /// <reference path='./pages/BasePage.ts' />
 /// <reference path='./pages/WelcomePage.ts' />
@@ -445,6 +564,18 @@ var EntryPoint = /** @class */ (function () {
 window.onload = function () { new EntryPoint(); };
 var core;
 (function (core) {
+    var database;
+    (function (database) {
+        var SubmissionEntity = /** @class */ (function () {
+            function SubmissionEntity() {
+            }
+            return SubmissionEntity;
+        }());
+        database.SubmissionEntity = SubmissionEntity;
+    })(database = core.database || (core.database = {}));
+})(core || (core = {}));
+var core;
+(function (core) {
     var request;
     (function (request) {
         var FetchRequest = /** @class */ (function () {
@@ -461,9 +592,10 @@ var core;
                     }
                 });
             };
-            FetchRequest.prototype.requestExternal = function (url) {
+            FetchRequest.prototype.requestExternal = function (url, method) {
+                if (method === void 0) { method = 'POST'; }
                 return fetch(url, {
-                    method: 'POST',
+                    method: method,
                     mode: 'cors',
                     credentials: 'same-origin',
                     headers: {
@@ -496,11 +628,12 @@ var core;
                     xhr.send();
                 });
             };
-            XhrRequest.prototype.requestExternal = function (url) {
+            XhrRequest.prototype.requestExternal = function (url, method) {
                 var _this = this;
+                if (method === void 0) { method = 'POST'; }
                 return new Promise(function (resolve, reject) {
                     var xhr = new XMLHttpRequest();
-                    xhr.open('POST', url);
+                    xhr.open(method, url);
                     xhr.setRequestHeader('Content-Type', 'application/json');
                     xhr.onload = function (evt) {
                         resolve(_this.parseXHRResult(xhr));

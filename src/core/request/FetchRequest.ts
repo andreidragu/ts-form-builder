@@ -12,9 +12,9 @@ module core.request {
                 });
         }
 
-        public requestExternal(url: string): Promise<Response200 | Response403> {
+        public requestExternal(url: string, method: string = 'POST'): Promise<Response200 | Response403> {
             return fetch(url, {
-                method: 'POST',
+                method: method,
                 mode: 'cors',
                 credentials: 'same-origin',
                 headers: {

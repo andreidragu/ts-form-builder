@@ -31,8 +31,8 @@ module utils {
             return this.httpRequest.requestInternal(url);
         }
 
-        public requestExternal(url: string): Promise<Response200 | Response403> {
-            return this.httpRequest.requestExternal(url);
+        public requestExternal(url: string, method?: string): Promise<Response200 | Response403> {
+            return this.httpRequest.requestExternal(url, method);
         }
     }
 }
