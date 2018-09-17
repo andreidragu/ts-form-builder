@@ -12,6 +12,10 @@ module core.database {
         }
 
         public initDB(): Promise<IDBDatabase> {
+            if (this.db) {
+                this.db.close();
+            }
+
             return new Promise<IDBDatabase>((resolve: Function, reject: Function) => {
                 const dbReq: IDBOpenDBRequest = this.dbFactory.open(this.dbName);
 
@@ -20,7 +24,7 @@ module core.database {
                     for (const osInfo of this.osInfos) {
                         const params: IDBObjectStoreParameters = { keyPath: osInfo.primaryFieldName, autoIncrement: true };
                         const objectStore: IDBObjectStore = this.db.createObjectStore(osInfo.storeName, params);
-                        objectStore.createIndex(osInfo.primaryIndexName, osInfo.primaryFieldName, { unique: true });
+                        objectStore.createIndex(osInfo.primaryIndexName, osInfo.primaryFieldName);
                     }
 
                     const trans: IDBTransaction = dbReq.transaction;

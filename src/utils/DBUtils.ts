@@ -22,16 +22,16 @@ module utils {
         }
 
         public initDatabase(): Promise<void> {
-            const osInfo: ObjectStoreInfo = {
-                primaryFieldName: 'LoginId',
-                primaryIndexName: 'LoginIdIndex',
+            const loginStoreInfo: ObjectStoreInfo = {
+                primaryFieldName: 'email',
+                primaryIndexName: 'emailIndex',
                 storeName: 'LoginStore'
             };
-            const md: ManageDatabase = new ManageDatabase('tsFormBuilderDB', [osInfo]);
+            const md: ManageDatabase = new ManageDatabase('tsFormBuilderDB', [loginStoreInfo]);
             return new Promise<void>((resolve: Function, reject: Function) => {
                 md.initDB()
                     .then((db: IDBDatabase) => {
-                        this._manageLoginTable = new ManageTable<LoginEntity>(db, osInfo);
+                        this._manageLoginTable = new ManageTable<LoginEntity>(db, loginStoreInfo);
                         resolve();
                     })
                     .catch((ev: Event) => {

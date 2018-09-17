@@ -1,5 +1,5 @@
 module core.database {
-    export class ManageTable<T extends { id: string }> {
+    export class ManageTable<T> {
         private db: IDBDatabase;
         private osInfo: ObjectStoreInfo;
 
@@ -29,7 +29,7 @@ module core.database {
                 const trans: IDBTransaction = this.db.transaction(this.osInfo.storeName, 'readwrite');
                 const objectStore: IDBObjectStore = trans.objectStore(this.osInfo.storeName);
                 const dbIndex: IDBIndex = objectStore.index(this.osInfo.primaryIndexName);
-                const dbReq: IDBRequest = dbIndex.get(objToUpdate.id);
+                const dbReq: IDBRequest = dbIndex.get((<any>objToUpdate)[this.osInfo.primaryFieldName]);
 
                 dbReq.onsuccess = () => {
                     const updReq: IDBRequest = objectStore.put(objToUpdate);

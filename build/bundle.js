@@ -13,64 +13,6 @@ var __extends = (this && this.__extends) || (function () {
 })();
 var core;
 (function (core) {
-    var request;
-    (function (request) {
-        var HTTP_REQUEST_TYPE;
-        (function (HTTP_REQUEST_TYPE) {
-            HTTP_REQUEST_TYPE[HTTP_REQUEST_TYPE["XHR"] = 0] = "XHR";
-            HTTP_REQUEST_TYPE[HTTP_REQUEST_TYPE["FETCH"] = 1] = "FETCH";
-        })(HTTP_REQUEST_TYPE = request.HTTP_REQUEST_TYPE || (request.HTTP_REQUEST_TYPE = {}));
-        var HttpRequestFactory = /** @class */ (function () {
-            function HttpRequestFactory() {
-            }
-            HttpRequestFactory.prototype.getHttpRequestType = function (httpRequestType) {
-                if (httpRequestType === void 0) { httpRequestType = HTTP_REQUEST_TYPE.FETCH; }
-                switch (httpRequestType) {
-                    case HTTP_REQUEST_TYPE.XHR:
-                        return new request.XhrRequest();
-                    case HTTP_REQUEST_TYPE.FETCH:
-                        return new request.FetchRequest();
-                }
-            };
-            return HttpRequestFactory;
-        }());
-        request.HttpRequestFactory = HttpRequestFactory;
-    })(request = core.request || (core.request = {}));
-})(core || (core = {}));
-/// <reference path='../core/request/HttpRequestFactory.ts' />
-var utils;
-(function (utils) {
-    var HttpRequestFactory = core.request.HttpRequestFactory;
-    var HTTP_REQUEST_TYPE = core.request.HTTP_REQUEST_TYPE;
-    /**
-     * Singleton class used to make http requests
-     */
-    var HttpUtils = /** @class */ (function () {
-        function HttpUtils() {
-            var httpRequestFactory = new HttpRequestFactory();
-            this.httpRequest = httpRequestFactory.getHttpRequestType(HTTP_REQUEST_TYPE.XHR);
-        }
-        /**
-         * HttpUtils single instance object
-         */
-        HttpUtils.getInstance = function () {
-            if (this._instance === undefined) {
-                this._instance = new HttpUtils();
-            }
-            return this._instance;
-        };
-        HttpUtils.prototype.requestInternal = function (url) {
-            return this.httpRequest.requestInternal(url);
-        };
-        HttpUtils.prototype.requestExternal = function (url) {
-            return this.httpRequest.requestExternal(url);
-        };
-        return HttpUtils;
-    }());
-    utils.HttpUtils = HttpUtils;
-})(utils || (utils = {}));
-var core;
-(function (core) {
     var database;
     (function (database) {
         var ManageDatabase = /** @class */ (function () {
@@ -81,6 +23,9 @@ var core;
             }
             ManageDatabase.prototype.initDB = function () {
                 var _this = this;
+                if (this.db) {
+                    this.db.close();
+                }
                 return new Promise(function (resolve, reject) {
                     var dbReq = _this.dbFactory.open(_this.dbName);
                     dbReq.onupgradeneeded = function () {
@@ -89,7 +34,7 @@ var core;
                             var osInfo = _a[_i];
                             var params = { keyPath: osInfo.primaryFieldName, autoIncrement: true };
                             var objectStore = _this.db.createObjectStore(osInfo.storeName, params);
-                            objectStore.createIndex(osInfo.primaryIndexName, osInfo.primaryFieldName, { unique: true });
+                            objectStore.createIndex(osInfo.primaryIndexName, osInfo.primaryFieldName);
                         }
                         var trans = dbReq.transaction;
                         trans.oncomplete = function () {
@@ -139,7 +84,7 @@ var core;
                     var trans = _this.db.transaction(_this.osInfo.storeName, 'readwrite');
                     var objectStore = trans.objectStore(_this.osInfo.storeName);
                     var dbIndex = objectStore.index(_this.osInfo.primaryIndexName);
-                    var dbReq = dbIndex.get(objToUpdate.id);
+                    var dbReq = dbIndex.get(objToUpdate[_this.osInfo.primaryFieldName]);
                     dbReq.onsuccess = function () {
                         var updReq = objectStore.put(objToUpdate);
                         updReq.onsuccess = function () {
@@ -188,48 +133,47 @@ var core;
         database.ManageTable = ManageTable;
     })(database = core.database || (core.database = {}));
 })(core || (core = {}));
-/// <reference path='../utils/HttpUtils.ts' />
-/// <reference path='../core/database/ManageDatabase.ts' />
-/// <reference path='../core/database/ManageTable.ts' />
-var pages;
-(function (pages) {
-    var HttpUtils = utils.HttpUtils;
-    var WelcomePage = /** @class */ (function () {
-        function WelcomePage() {
-            HttpUtils.getInstance().requestInternal('./welcome.html')
-                .then(function (text) {
-                document.getElementById('mainContainer').innerHTML = text;
-            });
-            // const osInfo: ObjectStoreInfo = {
-            //     storeName: 'TestStore',
-            //     primaryFieldName: 'id',
-            //     primaryIndexName: 'TestIdIndex'
-            // };
-            // const md: ManageDatabase = new ManageDatabase('testDB', [osInfo]);
-            // md.initDB().then((db: IDBDatabase) => {
-            //     const mt: ManageTable<TestEntity> = new ManageTable<TestEntity>(db, osInfo);
-            //     mt.addEntity(new TestEntity('Test1', 'value1', '1'));
-            //     mt.addEntity(new TestEntity('Test2', 'value2', '2'));
-            //     mt.addEntity(new TestEntity('Test3', 'value3', '3'));
-            //     mt.updateEntity(new TestEntity('Test2Test2', 'value2value2', '2'));
-            //     mt.readEntity('2').then((te: TestEntity) => {
-            //         console.log('READ\n' + te.name);
-            //     });
-            //     mt.getAllEntities().then((tes: TestEntity[]) => {
-            //         console.log('READ ALL');
-            //         for (const te of tes) {
-            //             console.log(te.name);
-            //         }
-            //     });
-            // });
-        }
-        return WelcomePage;
-    }());
-    pages.WelcomePage = WelcomePage;
-    // class TestEntity {
-    //     constructor(public name: string, public value: string, public id: string) { }
-    // }
-})(pages || (pages = {}));
+var core;
+(function (core) {
+    var database;
+    (function (database) {
+        var LoginEntity = /** @class */ (function () {
+            function LoginEntity() {
+                this.nrOfFailedTries = 0;
+                this.loginDates = [];
+                this.isLockedOut = false;
+            }
+            return LoginEntity;
+        }());
+        database.LoginEntity = LoginEntity;
+    })(database = core.database || (core.database = {}));
+})(core || (core = {}));
+var core;
+(function (core) {
+    var request;
+    (function (request) {
+        var HTTP_REQUEST_TYPE;
+        (function (HTTP_REQUEST_TYPE) {
+            HTTP_REQUEST_TYPE[HTTP_REQUEST_TYPE["XHR"] = 0] = "XHR";
+            HTTP_REQUEST_TYPE[HTTP_REQUEST_TYPE["FETCH"] = 1] = "FETCH";
+        })(HTTP_REQUEST_TYPE = request.HTTP_REQUEST_TYPE || (request.HTTP_REQUEST_TYPE = {}));
+        var HttpRequestFactory = /** @class */ (function () {
+            function HttpRequestFactory() {
+            }
+            HttpRequestFactory.prototype.getHttpRequestType = function (httpRequestType) {
+                if (httpRequestType === void 0) { httpRequestType = HTTP_REQUEST_TYPE.FETCH; }
+                switch (httpRequestType) {
+                    case HTTP_REQUEST_TYPE.XHR:
+                        return new request.XhrRequest();
+                    case HTTP_REQUEST_TYPE.FETCH:
+                        return new request.FetchRequest();
+                }
+            };
+            return HttpRequestFactory;
+        }());
+        request.HttpRequestFactory = HttpRequestFactory;
+    })(request = core.request || (core.request = {}));
+})(core || (core = {}));
 var pages;
 (function (pages) {
     var BasePage = /** @class */ (function () {
@@ -249,6 +193,55 @@ var pages;
 })(pages || (pages = {}));
 var utils;
 (function (utils) {
+    var HttpRequestFactory = core.request.HttpRequestFactory;
+    var HTTP_REQUEST_TYPE = core.request.HTTP_REQUEST_TYPE;
+    /**
+     * Singleton class used to make http requests
+     */
+    var HttpUtils = /** @class */ (function () {
+        function HttpUtils() {
+            var httpRequestFactory = new HttpRequestFactory();
+            this.httpRequest = httpRequestFactory.getHttpRequestType(HTTP_REQUEST_TYPE.XHR);
+        }
+        /**
+         * HttpUtils single instance object
+         */
+        HttpUtils.getInstance = function () {
+            if (this._instance === undefined) {
+                this._instance = new HttpUtils();
+            }
+            return this._instance;
+        };
+        HttpUtils.prototype.requestInternal = function (url) {
+            return this.httpRequest.requestInternal(url);
+        };
+        HttpUtils.prototype.requestExternal = function (url) {
+            return this.httpRequest.requestExternal(url);
+        };
+        return HttpUtils;
+    }());
+    utils.HttpUtils = HttpUtils;
+})(utils || (utils = {}));
+/// <reference path='../utils/HttpUtils.ts' />
+var pages;
+(function (pages) {
+    var HttpUtils = utils.HttpUtils;
+    var WelcomePage = /** @class */ (function (_super) {
+        __extends(WelcomePage, _super);
+        function WelcomePage() {
+            var _this = _super.call(this) || this;
+            HttpUtils.getInstance().requestInternal('./welcome.html')
+                .then(function (text) {
+                document.getElementById('mainContainer').innerHTML = text;
+            });
+            return _this;
+        }
+        return WelcomePage;
+    }(pages.BasePage));
+    pages.WelcomePage = WelcomePage;
+})(pages || (pages = {}));
+var utils;
+(function (utils) {
     var ManageDatabase = core.database.ManageDatabase;
     var ManageTable = core.database.ManageTable;
     var DBUtils = /** @class */ (function () {
@@ -265,16 +258,16 @@ var utils;
         };
         DBUtils.prototype.initDatabase = function () {
             var _this = this;
-            var osInfo = {
-                primaryFieldName: 'LoginId',
-                primaryIndexName: 'LoginIdIndex',
+            var loginStoreInfo = {
+                primaryFieldName: 'email',
+                primaryIndexName: 'emailIndex',
                 storeName: 'LoginStore'
             };
-            var md = new ManageDatabase('tsFormBuilderDB', [osInfo]);
+            var md = new ManageDatabase('tsFormBuilderDB', [loginStoreInfo]);
             return new Promise(function (resolve, reject) {
                 md.initDB()
                     .then(function (db) {
-                    _this._manageLoginTable = new ManageTable(db, osInfo);
+                    _this._manageLoginTable = new ManageTable(db, loginStoreInfo);
                     resolve();
                 })
                     .catch(function (ev) {
@@ -298,31 +291,14 @@ var utils;
     }());
     utils.DBUtils = DBUtils;
 })(utils || (utils = {}));
-var core;
-(function (core) {
-    var database;
-    (function (database) {
-        var LoginEntity = /** @class */ (function () {
-            function LoginEntity() {
-                this.nrOfFailedTries = 0;
-                this.loginDates = [];
-                this.isLockedOut = false;
-            }
-            return LoginEntity;
-        }());
-        database.LoginEntity = LoginEntity;
-    })(database = core.database || (core.database = {}));
-})(core || (core = {}));
-/// <reference path='BasePage.ts' />
-/// <reference path='../utils/DBUtils.ts' />
-/// <reference path='../core/database/LoginEntity.ts' />
 /// <reference path='../utils/HttpUtils.ts' />
+/// <reference path='../utils/DBUtils.ts' />
 var pages;
 (function (pages) {
-    var BasePage = pages.BasePage;
-    var DBUtils = utils.DBUtils;
     var LoginEntity = core.database.LoginEntity;
+    var DBUtils = utils.DBUtils;
     var HttpUtils = utils.HttpUtils;
+    var BasePage = pages.BasePage;
     var LoginPage = /** @class */ (function (_super) {
         __extends(LoginPage, _super);
         function LoginPage() {
@@ -343,6 +319,7 @@ var pages;
          */
         LoginPage.prototype.initLoginVars = function () {
             this.loginForm = document.querySelector('form');
+            this.loginFormFieldSet = document.getElementById('loginFormFieldSet');
             this.errorElem = document.getElementById('errorElem');
             this.loginForm.onsubmit = this.onSubmitLoginForm.bind(this);
         };
@@ -357,25 +334,27 @@ var pages;
             var formData = new FormData(this.loginForm);
             var emailForm = formData.get('email');
             var passForm = formData.get('password');
-            document.getElementById('loginFormFieldset').disabled = true;
+            this.loginFormFieldSet.disabled = true;
             this.mainContainer.appendChild(this.loaderElem);
+            //----------------------------------------------------------------------------------------------------
             var loginEntity = this.loginEntities.find(function (obj) {
                 return obj.email === emailForm.toString();
             });
             if (loginEntity && loginEntity.isLockedOut) {
-                loginEntity.loginDates.push("Locked on: " + new Date().toDateString());
+                loginEntity.loginDates.push("Locked out: " + new Date().toISOString());
                 DBUtils.getInstance().manageLoginTable.updateEntity(loginEntity)
                     .then(function () {
                     _this.handleError({ error: { message: 'This user is locked. Too many tries!' } });
-                    ev.preventDefault();
-                    return;
                 });
+                ev.preventDefault();
+                return;
             }
             else if (!loginEntity) {
                 loginEntity = new LoginEntity();
-                loginEntity.id = loginEntity.email = emailForm.toString();
+                loginEntity.email = emailForm.toString();
                 this.loginEntities.push(loginEntity);
             }
+            //----------------------------------------------------------------------------------------------------
             HttpUtils.getInstance().requestExternal("https://api.123contactform.com/v2/token?email=" + emailForm + "&password=" + passForm)
                 .then(function (data) {
                 if ('error' in data) {
@@ -383,6 +362,7 @@ var pages;
                     if (loginEntity.nrOfFailedTries === 5) {
                         loginEntity.isLockedOut = true;
                     }
+                    loginEntity.loginDates.push("Failed on: " + new Date().toISOString());
                     DBUtils.getInstance().manageLoginTable.updateEntity(loginEntity)
                         .then(function () {
                         if (loginEntity.isLockedOut) {
@@ -394,6 +374,7 @@ var pages;
                     });
                 }
                 else {
+                    loginEntity.loginDates.push("Sucefull on: " + new Date().toISOString());
                     DBUtils.getInstance().manageLoginTable.updateEntity(loginEntity)
                         .then(function () {
                         _this.handleSuccess(data);
@@ -408,7 +389,7 @@ var pages;
          * @param data {Response403} error response data containing a status code and a message
          */
         LoginPage.prototype.handleError = function (data) {
-            document.getElementById('loginFormFieldset').disabled = false;
+            this.loginFormFieldSet.disabled = false;
             this.mainContainer.removeChild(this.loaderElem);
             this.errorElem.textContent = data.error.message;
             var passElem = document.getElementById('password');
@@ -421,17 +402,20 @@ var pages;
          */
         LoginPage.prototype.handleSuccess = function (data) {
             window.sessionStorage.setItem('token', data.token);
-            document.getElementById('mainContainer').innerHTML = '';
-            this.mainContainer.innerHTML = this.loaderElem.innerHTML;
             new pages.WelcomePage();
         };
         return LoginPage;
     }(BasePage));
     pages.LoginPage = LoginPage;
 })(pages || (pages = {}));
+/// <reference path='./core/database/ManageDatabase.ts' />
+/// <reference path='./core/database/ManageTable.ts' />
+/// <reference path='./core/database/ObjectStoreInfo.ts' />
+/// <reference path='./core/database/LoginEntity.ts' />
+/// <reference path='./core/request/HttpRequestFactory.ts' />
+/// <reference path='./pages/BasePage.ts' />
 /// <reference path='./pages/WelcomePage.ts' />
 /// <reference path='./pages/LoginPage.ts' />
-/// <reference path='./utils/DBUtils.ts' />
 var WelcomePage = pages.WelcomePage;
 var LoginPage = pages.LoginPage;
 var DBUtils = utils.DBUtils;
