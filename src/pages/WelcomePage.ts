@@ -28,6 +28,8 @@ module pages {
         }
 
         private initWelcomeVars(): void {
+            this.welcomeTable = <HTMLTableElement>document.getElementById('welcomeTable');
+
             this.getAllFormsAndSubmissions().then((formEntities: FormEntity[]) => {
                 this.formEntities = formEntities;
                 this.populateWelcomeTable();
@@ -37,35 +39,37 @@ module pages {
                 }
             });
 
-            this.welcomeTable = <HTMLTableElement>document.getElementById('welcomeTable');
-
             this.populateWelcomeTable();
         }
 
         private populateWelcomeTable(): void {
             let earliest: number = Date.parse(this.formEntities[0].submissions[0].date);
             let latest: number = earliest;
-            let firstFormName: string = '';
-            let lastFormName: string = '';
+            let firstFormName: string = '', firstFormDate: string = '';
+            let lastFormName: string = '', lastFormDate: string = '';
             for (const formEntity of this.formEntities) {
                 for (const submission of formEntity.submissions) {
                     const submissionDate: number = Date.parse(submission.date);
                     if (submissionDate < earliest) {
                         earliest = submissionDate;
                         firstFormName = formEntity.name;
+                        firstFormDate = submission.date;
                     }
                     if (submissionDate > latest) {
                         latest = submissionDate;
                         lastFormName = formEntity.name;
+                        lastFormDate = submission.date;
                     }
                 }
             }
 
-            const row: HTMLTableRowElement = this.welcomeTable.tBodies[0].insertRow(0);
-            const first: HTMLTableCellElement = row.insertCell(0);
-            const last: HTMLTableCellElement = row.insertCell(1);
-            first.innerText = `The first submission was done on ${this.formatDate(new Date(earliest))} on ${firstFormName}`;
-            last.innerText = `The last submission was done on ${this.formatDate(new Date(latest))} on ${lastFormName}`;
+            const row: HTMLTableRowElement = this.welcomeTable.tBodies[0].rows[0]
+            const first: HTMLTableCellElement = row.cells[0];
+            const last: HTMLTableCellElement = row.cells[1];
+            // first.innerText = `The first submission was done on ${this.formatDate(new Date(earliest))} on ${firstFormName}`;
+            // last.innerText = `The last submission was done on ${this.formatDate(new Date(latest))} on ${lastFormName}`;
+            first.innerText = `The first submission was done on ${firstFormDate} on ${firstFormName}`;
+            last.innerText = `The last submission was done on ${lastFormDate} on ${lastFormName}`;
         }
 
         private getAllFormsAndSubmissions(): Promise<FormEntity[]> {
@@ -97,15 +101,15 @@ module pages {
             });
         }
 
-        private formatDate(date: Date): string {
-            const year: number = date.getFullYear();
-            const month: string = date.getUTCMonth() > 9 ? date.getUTCMonth().toString() : `0${date.getUTCMonth()}`;
-            const day: string = date.getUTCDay() > 9 ? date.getUTCDay().toString() : `0${date.getUTCDay()}`;
-            const hour: string = date.getUTCHours() > 9 ? date.getUTCHours().toString() : `0${date.getUTCHours()}`;
-            const minutes: string = date.getUTCMinutes() > 9 ? date.getUTCMinutes().toString() : `0${date.getUTCMinutes()}`;
-            const seconds: string = date.getUTCSeconds() > 9 ? date.getUTCSeconds().toString() : `0${date.getUTCSeconds()}`;
+        // private formatDate(date: Date): string {
+        //     const year: number = date.getFullYear();
+        //     const month: string = date.getUTCMonth() > 9 ? date.getUTCMonth().toString() : `0${date.getUTCMonth()}`;
+        //     const day: string = date.getUTCDay() > 9 ? date.getUTCDay().toString() : `0${date.getUTCDay()}`;
+        //     const hour: string = date.getUTCHours() > 9 ? date.getUTCHours().toString() : `0${date.getUTCHours()}`;
+        //     const minutes: string = date.getUTCMinutes() > 9 ? date.getUTCMinutes().toString() : `0${date.getUTCMinutes()}`;
+        //     const seconds: string = date.getUTCSeconds() > 9 ? date.getUTCSeconds().toString() : `0${date.getUTCSeconds()}`;
 
-            return `${year}-${month}-${day} ${hour}:${minutes}:${seconds}`;
-        }
+        //     return `${year}-${month}-${day} ${hour}:${minutes}:${seconds}`;
+        // }
     }
 }
