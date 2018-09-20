@@ -1,9 +1,12 @@
+///<reference path="../core/database/ManageDatabase.ts"/>
+///<reference path="../core/database/ManageTable.ts"/>
+
 module utils {
     import ObjectStoreInfo = core.database.ObjectStoreInfo;
     import ManageDatabase = core.database.ManageDatabase;
     import ManageTable = core.database.ManageTable;
-    import LoginEntity = core.database.LoginEntity;
-    import FormEntity = core.database.FormEntity;
+    import LoginEntity = core.database.dao.LoginEntity;
+    import FormEntity = core.database.dao.FormEntity;
 
     export class DBUtils {
         private static _instance: DBUtils;
@@ -11,7 +14,9 @@ module utils {
         private _manageLoginTable: ManageTable<LoginEntity>;
         private _manageFormTable: ManageTable<FormEntity>;
 
-        private constructor() { }
+        private constructor() {
+            // singleton class
+        }
 
         /**
          * DBUtils single instance object

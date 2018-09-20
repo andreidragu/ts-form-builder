@@ -1,14 +1,6 @@
-/// <reference path='./core/database/ManageDatabase.ts' />
-/// <reference path='./core/database/ManageTable.ts' />
-/// <reference path='./core/database/ObjectStoreInfo.ts' />
-/// <reference path='./core/database/LoginEntity.ts' />
-/// <reference path='./core/database/FormEntity.ts' />
-
-/// <reference path='./core/request/HttpRequestFactory.ts' />
-
-/// <reference path='./pages/BasePage.ts' />
-/// <reference path='./pages/WelcomePage.ts' />
-/// <reference path='./pages/LoginPage.ts' />
+///<reference path="pages/WelcomePage.ts"/>
+///<reference path="pages/LoginPage.ts"/>
+///<reference path="utils/DBUtils.ts"/>
 
 import WelcomePage = pages.WelcomePage;
 import LoginPage = pages.LoginPage;
@@ -39,4 +31,6 @@ class EntryPoint {
     }
 }
 
-window.onload = () => { new EntryPoint() };
+window.onload = () => {
+    new EntryPoint();
+};

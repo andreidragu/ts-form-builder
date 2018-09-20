@@ -1,4 +1,4 @@
-module core.database {
+module core.database.dao {
     export class LoginEntity {
         public email: string;
         public nrOfFailedTries: number = 0;

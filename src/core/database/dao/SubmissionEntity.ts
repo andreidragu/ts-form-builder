@@ -1,4 +1,4 @@
-module core.database {
+module core.database.dao {
     export class SubmissionEntity {
         id: number;
         form_id: number;
@@ -9,8 +9,11 @@ module core.database {
         payed: number;
         approved: number;
         date: string;
-        content: object;
+        content: {
+            [key: string]: any;
+        };
         recipients: object;
+
         [key: string]: any;
     }
 }

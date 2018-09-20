@@ -1,10 +1,11 @@
-module core.database {
+module core.database.dao {
     export class FormEntity {
         id: number;
         name: string;
         group_id: number;
         user_id: number;
         submissions: SubmissionEntity[];
+        fields: FieldsEntity;
         submissions_count: number;
         submissions_count_month: number;
         latest_submission: {
@@ -16,6 +17,7 @@ module core.database {
         active_date_from: string;
         active_date_to: string;
         active_days: string;
+
         [key: string]: any;
     }
 }

@@ -1,0 +1,56 @@
+<div id="welcomeContainer" class="container">
+    <!--<nav class="navbar navbar-dark bg-dark">
+        <form class="form-inline">
+            <input class="form-control mr-sm-2" type="text" placeholder="Search">
+            <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>
+        </form>
+    </nav> mb-2 mr-sm-2-->
+    <nav class="navbar sticky-top navbar-light bg-light">
+        <form id="searchForm" class="form-inline">
+            <div class="input-group ml-5">
+                <div class="input-group-prepend">
+                    <label class="input-group-text" for="inputSearchWhere">Search in</label>
+                </div>
+                <select class="custom-select" id="inputSearchWhere">
+                    <option selected value="1">ALL</option>
+                    <option value="2">Name</option>
+                    <option value="3">Email</option>
+                </select>
+            </div>
+            <div class="input-group ml-5">
+                <div class="input-group-prepend">
+                    <label class="input-group-text" for="inputSearchTYpe">Type</label>
+                </div>
+                <select class="custom-select" id="inputSearchTYpe">
+                    <option selected value="1">Partial</option>
+                    <option value="2">Perfect Match</option>
+                </select>
+            </div>
+            <div class="input-group ml-5">
+                <input class="form-control mr-sm-2" type="text" placeholder="value" name="searchValue">
+                <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>
+            </div>
+        </form>
+    </nav>
+    <table id="welcomeTable" class="table mt-5">
+        <thead>
+        <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Phone</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr>
+            <!--<td>Mark</td>
+            <td>Otto</td>
+            <td>0123456789</td>-->
+        </tr>
+        <tr>
+            <!--<td>Jacob</td>
+            <td>Thornton</td>
+            <td>9876543210</td>-->
+        </tr>
+        </tbody>
+    </table>
+</div>

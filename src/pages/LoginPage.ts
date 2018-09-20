@@ -1,8 +1,9 @@
-/// <reference path='../utils/HttpUtils.ts' />
-/// <reference path='../utils/DBUtils.ts' />
+///<reference path="../core/database/dao/LoginEntity.ts"/>
+///<reference path="../utils/HttpUtils.ts"/>
+///<reference path="BasePage.ts"/>
 
 module pages {
-    import LoginEntity = core.database.LoginEntity;
+    import LoginEntity = core.database.dao.LoginEntity;
     import Response200 = core.request.Response200;
     import Response403 = core.request.Response403;
     import DBUtils = utils.DBUtils;
@@ -21,7 +22,7 @@ module pages {
                 .then((loginEntities: LoginEntity[]) => {
                     this.loginEntities = loginEntities;
 
-                    HttpUtils.getInstance().requestInternal('./login.html')
+                    HttpUtils.getInstance().requestInternal('./pages/login.html')
                         .then((text: string) => {
                             this.mainContainer.innerHTML = text;
                             this.initLoginVars();
@@ -42,7 +43,7 @@ module pages {
 
         /**
          * Bind method to the on submit action for login form.
-         * 
+         *
          * @param ev {Event} login form's event related object
          */
         private onSubmitLoginForm(ev: Event): void {
@@ -62,7 +63,7 @@ module pages {
                 loginEntity.loginDates.push(`Locked out: ${new Date().toISOString()}`);
                 DBUtils.getInstance().manageLoginTable.updateEntity(loginEntity)
                     .then(() => {
-                        this.handleError({ error: { message: 'This user is locked. Too many tries!' } });
+                        this.handleError({error: {message: 'This user is locked. Too many tries!'}});
                     });
                 ev.preventDefault();
                 return;
@@ -84,7 +85,7 @@ module pages {
                         DBUtils.getInstance().manageLoginTable.updateEntity(loginEntity)
                             .then(() => {
                                 if (loginEntity.isLockedOut) {
-                                    this.handleError({ error: { message: 'This user is locked. Too many tries!' } });
+                                    this.handleError({error: {message: 'This user is locked. Too many tries!'}});
                                 } else {
                                     this.handleError(data);
                                 }
@@ -103,7 +104,7 @@ module pages {
 
         /**
          * Handle response in case of an error.
-         * 
+         *
          * @param data {Response403} error response data containing a status code and a message
          */
         private handleError(data: Response403): void {
@@ -117,7 +118,7 @@ module pages {
 
         /**
          * Handle success response.
-         * 
+         *
          * @param data {Response200} response data containing token in case of succesfull request
          */
         private handleSuccess(data: Response200): void {

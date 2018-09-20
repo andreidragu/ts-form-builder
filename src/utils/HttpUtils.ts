@@ -1,3 +1,5 @@
+///<reference path="../core/request/HttpRequestFactory.ts"/>
+
 module utils {
     import HttpRequestFactory = core.request.HttpRequestFactory;
     import HTTP_REQUEST_TYPE = core.request.HTTP_REQUEST_TYPE;
