@@ -317,6 +317,14 @@ var pages;
                         document.getElementById('searchForm').querySelector('input').disabled = false;
                         document.getElementById('searchForm').querySelector('button').disabled = false;
                         _this.initWelcomeVars();
+                    })
+                        .catch(function (err) {
+                        _this.mainContainer.removeChild(_this.loaderElem);
+                        document.getElementById('inputSearchWhere').disabled = false;
+                        document.getElementById('inputSearchTYpe').disabled = false;
+                        document.getElementById('searchForm').querySelector('input').disabled = false;
+                        document.getElementById('searchForm').querySelector('button').disabled = false;
+                        _this.initWelcomeVars();
                     });
                     // debug
                     // this.initWelcomeVars();
