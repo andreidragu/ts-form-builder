@@ -36,14 +36,25 @@ module pages {
                     HttpUtils.getInstance().requestInternal('./pages/welcome.html')
                         .then((text: string) => {
                             document.getElementById('mainContainer').innerHTML = text;
+							(<HTMLSelectElement>document.getElementById('inputSearchWhere')).disabled = true;
+                            (<HTMLSelectElement>document.getElementById('inputSearchTYpe')).disabled = true;
+                            (<HTMLFormElement>document.getElementById('searchForm')).querySelector('input').disabled = true;
+                            (<HTMLFormElement>document.getElementById('searchForm')).querySelector('button').disabled = true;
+							this.mainContainer.appendChild(this.loaderElem);
 
                             this.getAllFormsAndSubmissions().then((formEntities: FormEntity[]) => {
                                 this.formEntities = formEntities;
-                                this.initWelcomeVars();
-
                                 for (const formEntity of formEntities) {
                                     DBUtils.getInstance().manageFormTable.updateEntity(formEntity);
                                 }
+								
+								this.mainContainer.removeChild(this.loaderElem);
+								(<HTMLSelectElement>document.getElementById('inputSearchWhere')).disabled = false;
+                                (<HTMLSelectElement>document.getElementById('inputSearchTYpe')).disabled = false;
+                                (<HTMLFormElement>document.getElementById('searchForm')).querySelector('input').disabled = false;
+                                (<HTMLFormElement>document.getElementById('searchForm')).querySelector('button').disabled = false;
+								
+								this.initWelcomeVars();
                             });
                             // debug
                             // this.initWelcomeVars();

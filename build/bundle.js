@@ -300,13 +300,23 @@ var pages;
                 HttpUtils.getInstance().requestInternal('./pages/welcome.html')
                     .then(function (text) {
                     document.getElementById('mainContainer').innerHTML = text;
+                    document.getElementById('inputSearchWhere').disabled = true;
+                    document.getElementById('inputSearchTYpe').disabled = true;
+                    document.getElementById('searchForm').querySelector('input').disabled = true;
+                    document.getElementById('searchForm').querySelector('button').disabled = true;
+                    _this.mainContainer.appendChild(_this.loaderElem);
                     _this.getAllFormsAndSubmissions().then(function (formEntities) {
                         _this.formEntities = formEntities;
-                        _this.initWelcomeVars();
                         for (var _i = 0, formEntities_1 = formEntities; _i < formEntities_1.length; _i++) {
                             var formEntity = formEntities_1[_i];
                             DBUtils.getInstance().manageFormTable.updateEntity(formEntity);
                         }
+                        _this.mainContainer.removeChild(_this.loaderElem);
+                        document.getElementById('inputSearchWhere').disabled = false;
+                        document.getElementById('inputSearchTYpe').disabled = false;
+                        document.getElementById('searchForm').querySelector('input').disabled = false;
+                        document.getElementById('searchForm').querySelector('button').disabled = false;
+                        _this.initWelcomeVars();
                     });
                     // debug
                     // this.initWelcomeVars();
